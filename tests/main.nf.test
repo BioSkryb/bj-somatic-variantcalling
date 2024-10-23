@@ -1,0 +1,47 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("somatic_variant_calling_test") {
+
+        when {
+            params {
+                publish_dir = "${outputDir}/results"
+                input_csv   = "$baseDir/tests/data/inputs/input2.csv"
+                timestamp = "test"
+                pseudo_bulk_run = "true"
+                is_bam = "true"
+                architecture = "x86"
+            }
+        }
+
+        then {
+            assertAll(
+                // Check if the workflow was successful
+                { assert workflow.success },
+
+                // Verify existence of the multiqc report HTML file
+                {assert new File("${outputDir}/results_test/multiqc/multiqc_report.html").exists()},
+
+                // Check for a match in the all metrics MQC text file
+                {assert snapshot (path("${outputDir}/results_test/secondary_analyses/metrics/nf-wgs-pipeline_all_metrics_mqc.txt")).match("all_metrics_mqc")},
+
+                // Check for a match in the selected metrics MQC text file
+                {assert snapshot (path("${outputDir}/results_test/secondary_analyses/metrics/nf-wgs-pipeline_selected_metrics_mqc.txt")).match("selected_metrics_mqc")},
+
+                // Verify existence of the bam file
+                {assert new File("${outputDir}/results_test/secondary_analyses/alignment/GROUP1.bam.bai").exists()},
+
+                // Check for a match in the pseudobulk csv file
+                {assert snapshot (path("${outputDir}/results_test/pseudobulk/pseudobulk_input.csv")).match("pseudo_bulk_input")},
+
+                // Verify existence of the tnscope out file
+                {assert new File("${outputDir}/results_test/variant_calls_tnscope/chr22_testsample2_S1_L001_GROUP1/chr22_testsample2_S1_L001_tnscope.vcf.gz").exists()}
+
+            )
+        }
+
+    }
+
+}
