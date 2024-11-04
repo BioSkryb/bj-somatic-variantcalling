@@ -42,8 +42,13 @@ def helpMessage() {
 
         ${yellow}[optional]${white}
 
-        --pseudo_bulk_run           BOOL    To generates a pseudo bulk fastq file when all provided inputs are single/tumor samples (i.e., isbulk is set to false for all samples).
-                                            DEFAULT: ${params.pseudo_bulk_run}
+        --variant_workflow_type     STR    This parameter sets the appropriate workflow to run based on the provided samples:
+                                            - match_normal: if one normal sample is provided for the set of single/tumor samples.
+                                            - panel_normal: if more than one normal sample is provided for the set of single/tumor samples.
+                                            - pseudobulk: if no normal samples are provided.
+                                            DEFAULT: ${params.variant_workflow_type}
+
+        --panel_of_normal_vcf       FILE    Path to panel of normal vcf file
 
         --somatic_variant_caller    STR     To select the Variant Caller. The options are tnscope or tnseq.
                                             DEFAULT: ${params.somatic_variant_caller}

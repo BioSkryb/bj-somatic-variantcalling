@@ -3,18 +3,18 @@
         "content": [
             "pseudobulk_input.csv:md5,0678b3a85e2df7cf08e0ff32dbca8d3b"
         ],
-        "timestamp": "2024-10-09T08:52:20+0000"
+        "timestamp": "2024-10-24T17:09:33+0000"
     },
     "selected_metrics_mqc": {
         "content": [
             "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,bb78d1f5489b8bf1078c830ff01c5225"
         ],
-        "timestamp": "2024-10-09T08:52:20+0000"
+        "timestamp": "2024-10-24T17:09:33+0000"
     },
     "all_metrics_mqc": {
         "content": [
             "nf-wgs-pipeline_all_metrics_mqc.txt:md5,e75f1e227f1cc6699a6e23e4acb41b78"
         ],
-        "timestamp": "2024-10-09T08:52:20+0000"
+        "timestamp": "2024-10-24T17:09:33+0000"
     }
 }

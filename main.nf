@@ -3,7 +3,7 @@ import groovy.json.JsonOutput
 
 include { printHeader; helpMessage } from './help' params ( params )
 include { PUBLISH_INPUT_DATASET_WF } from './nf-bioskryb-utils/modules/bioskryb/publish_input_dataset/main.nf' addParams(timestamp: params.timestamp)
-include { SOMATIC_VARIANT_WORKFLOW } from './nf-bioskryb-utils/subworkflows/somatic_variant_calling/main.nf' params ( params )
+include { SOMATIC_VARIANT_WORKFLOW_MATCHNORMAL; SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK; SOMATIC_VARIANT_WORKFLOW_PANELNORMAL } from './nf-bioskryb-utils/subworkflows/somatic_variant_calling/main.nf' params ( params )
 include { VARIANT_ANNOTATION_WF } from './nf-bioskryb-utils/subworkflows/variant_annotation/main.nf' params ( params )
 include { SENTIEON_DRIVER_TNSCOPE } from './nf-bioskryb-utils/modules/sentieon/driver/tnscope/main.nf' addParams( timestamp: params.timestamp )
 include { SENTIEON_DRIVER_TNSEQ } from './nf-bioskryb-utils/modules/sentieon/driver/tnseq/main.nf' addParams( timestamp: params.timestamp )
@@ -65,50 +65,6 @@ workflow {
                                         params.enable_publish
                                     )
 
-    /*
-    ========================================================================================
-        SET_PSEUDO_BULK
-    ========================================================================================
-    */
-
-    // Counting the reads for each sample
-    CUSTOM_READ_COUNTS_WF (
-                            ch_reads.map{ [it[0], it[1]] },
-                            params.publish_dir,
-                            params.enable_publish
-                        )
-    // Process to check if bulk samples are present and choose samples for pseudobulk generation    
-    SET_PSEUDO_BULK(ch_input_csv, CUSTOM_READ_COUNTS_WF.out.combined_read_counts, params.publish_dir, params.enable_publish)
-    SET_PSEUDO_BULK.out.bulk_bool.map { it.text.trim() }.set { bulk_bool_value }
-
-    if ( !params.is_bam ){
-        ch_pseudobulk_reads = SET_PSEUDO_BULK.out.pseudo_bulk_samples.splitCsv( header:true )
-                    .map { row -> [ row.biosampleName, [ row.read1, row.read2 ], row.groups, row.isbulk, row.n_reads ] }
-    } else {  
-        ch_pseudobulk_reads = SET_PSEUDO_BULK.out.pseudo_bulk_samples.splitCsv( header:true )
-                    .map { row -> [ row.biosampleName, [ row.bam, row.bam + ".bai", row.bam.replace(".bam", "_recal_data.table")], row.groups, row.isbulk, row.n_reads ] }
-
-        ch_bam_recaltab = ch_reads.map{ sample, files, groups, isbulk -> [sample, files[0], files[1], files[2]] }
-        ch_bam_only = ch_reads.map{ sample, files, groups, isbulk -> [sample, files[0], files[1]] }
-        ch_dedup_metrics = ch_reads.map{ sample, files, groups, isbulk -> [sample, files[3]] }
-    }
-    ch_pseudobulk_reads_list = ch_pseudobulk_reads.toList()
-    ch_pseudobulk_reads_list.view()
-        
-
-    // Checks before pseudobulk generation
-    bulk_bool_value.subscribe { bulk_bool ->
-        if (!bulk_bool.toBoolean()) {
-            println("No bulk samples found. Proceeding with pseudobulk generation.")
-            ch_pseudobulk_reads_list.subscribe { reads ->
-                if (!params.pseudo_bulk_run || "${params.pseudo_bulk_run}".equalsIgnoreCase("false")){
-                    log.error("ERROR: The parameter 'pseudo_bulk_run' must be set to 'true' when there are no bulk samples in the input.csv. Exiting.")
-                    exit 1
-                }
-            }
-        }
-    }
-
 
     if ( !params.is_bam ){
         /*
@@ -130,9 +86,6 @@ workflow {
                                 params.publish_dir,
                                 params.enable_publish
                             )
-        
-        pseudobulk_input_bam = SENTIEON_ALIGNMENT.out.bam.join(ch_pseudobulk_reads, by: 0)
-        .map { sample, bam, bai, reads, groups, isbulk, n_reads -> [sample, bam, bai, groups, n_reads] }
 
         ch_bam_recaltab = SENTIEON_ALIGNMENT.out.bam_recal_table
         ch_bam_only = SENTIEON_ALIGNMENT.out.bam
@@ -144,82 +97,159 @@ workflow {
                     { it[0] + "\t" + "${params.publish_dir}_${params.timestamp}/secondary_analyses/alignment/" + it[1].getName() }
 
     } else{
-        pseudobulk_input_bam = ch_bam_only.join(ch_pseudobulk_reads, by: 0)
-        .map { sample, bam, bai, files, groups, isbulk, n_reads -> [sample, bam, bai, groups, n_reads] }
 
         ch_reads.map{ sample, files, groups, isbulk -> [sample, files[0], files[1]] }
         .collectFile( name: "bam_files.txt", newLine: true, sort: { it[0] }, storeDir: "${params.tmp_dir}" )
             { it[0] + "\t" + "${params.publish_dir}_${params.timestamp}/secondary_analyses/alignment/" + new File(it[1]).getName() }
 
-    }
-    
-
-    /*
-    ========================================================================================
-        PSEUDOBULK
-    ========================================================================================
-    */
-
-    if (params.pseudo_bulk_run || "${params.pseudo_bulk_run}".equalsIgnoreCase("true")){
-        // Pseudobulk run and setting the channels for somatic variant calling
-        PSEUDO_BULK_WF (
-                            pseudobulk_input_bam,
-                            params.genome,
-                            params.reference,
-                            params.dbsnp,
-                            params.dbsnp_index,
-                            params.mills,
-                            params.mills_index,
-                            params.onekg,
-                            params.onekg_index,
-                            params.publish_dir,
-                            params.enable_publish
-                        )
-
-        ch_picard_version = PSEUDO_BULK_WF.out.picard_version
-        ch_samtools_version = PSEUDO_BULK_WF.out.samtools_version
-
-        // Rearranging the meta index so that the pseudo sample name (which is group name) comes in line with group in the ch_pseudobulk_reads
-        pseudo_bam_recal_rearranged = PSEUDO_BULK_WF.out.pseudo_bam_recal
-                                        .map { sample, bam, bai, recal -> [bam, bai, sample, recal]}
-
-        ch_bam_bulk = pseudo_bam_recal_rearranged.join(ch_pseudobulk_reads, by: 2)
-            .map { pseudo_group, bam, bai, recal_table, sample_name, reads, isbulk, n_reads -> [pseudo_group, [bam, bai], recal_table, pseudo_group] }
-        
-    } else{
-        // Setting the bulk channel using the isbulk set to true samples
-        ch_reads_bulk = ch_reads.filter { it[3].toBoolean() }
-        ch_bam_bulk = ch_bam_recaltab.join(ch_reads_bulk).map 
-            { sample_name, bam, bai, recal_table, fasta, groups, isbulk -> [sample_name, [bam, bai], recal_table, groups] }
-
-        ch_picard_version = Channel.empty()
-        ch_samtools_version = Channel.empty()
+        ch_bam_recaltab = ch_reads.map{ sample, files, groups, isbulk -> [sample, files[0], files[1], files[2]] }
+        ch_bam_only = ch_reads.map{ sample, files, groups, isbulk -> [sample, files[0], files[1]] }
+        ch_dedup_metrics = ch_reads.map{ sample, files, groups, isbulk -> [sample, files[3]] }
 
     }
 
-    // Setting the single/tumor channel using the samples which has isbulk set as false
-    ch_reads_single = ch_reads.filter { !it[3].toBoolean() }
-    ch_bam_single = ch_bam_recaltab.join(ch_reads_single).map 
-        { sample_name, bam, bai, recal_table, fasta, groups, isbulk -> [sample_name, [bam, bai], recal_table, groups] }
+    if ("${params.variant_workflow_type}".equalsIgnoreCase("pseudobulk")){
 
-    /*
-    ========================================================================================
-        SOMATIC VARIANT WORKFLOW
-    ========================================================================================
-    */
+        /*
+        ========================================================================================
+            PSEUDOBULK
+        ========================================================================================
+        */
 
-    ch_input = ch_bam_single.combine( ch_bam_bulk, by: 3 )
+        // Counting the reads for each sample
+        CUSTOM_READ_COUNTS_WF (
+                                ch_reads.map{ [it[0], it[1]] },
+                                params.publish_dir,
+                                params.enable_publish
+                            )
+        // Process to check if bulk samples are present and choose samples for pseudobulk generation    
+        SET_PSEUDO_BULK(ch_input_csv, CUSTOM_READ_COUNTS_WF.out.combined_read_counts, params.publish_dir, params.enable_publish)
+        SET_PSEUDO_BULK.out.bulk_bool.map { it.text.trim() }.set { bulk_bool_value }
 
-    SOMATIC_VARIANT_WORKFLOW (
-            ch_input,
+        if ( !params.is_bam ){
+            ch_pseudobulk_reads = SET_PSEUDO_BULK.out.pseudo_bulk_samples.splitCsv( header:true )
+                        .map { row -> [ row.biosampleName, [ row.read1, row.read2 ], row.groups, row.isbulk, row.n_reads ] }
+
+            pseudobulk_input_bam = SENTIEON_ALIGNMENT.out.bam.join(ch_pseudobulk_reads, by: 0)
+                .map { sample, bam, bai, reads, groups, isbulk, n_reads -> [sample, bam, bai, groups, n_reads] }
+        } else {  
+            ch_pseudobulk_reads = SET_PSEUDO_BULK.out.pseudo_bulk_samples.splitCsv( header:true )
+                        .map { row -> [ row.biosampleName, [ row.bam, row.bam + ".bai", row.bam.replace(".bam", "_recal_data.table")], row.groups, row.isbulk, row.n_reads ] }
+
+            pseudobulk_input_bam = ch_bam_only.join(ch_pseudobulk_reads, by: 0)
+                .map { sample, bam, bai, files, groups, isbulk, n_reads -> [sample, bam, bai, groups, n_reads] }
+        }
+        ch_pseudobulk_reads_list = ch_pseudobulk_reads.toList()
+        ch_pseudobulk_reads_list.view()
+            
+
+        // Checks before pseudobulk generation
+        bulk_bool_value.subscribe { bulk_bool ->
+            if (!bulk_bool.toBoolean()) {
+                println("No bulk samples found. Proceeding with pseudobulk generation.")
+                ch_pseudobulk_reads_list.subscribe { reads ->
+                    if (!"${params.variant_workflow_type}".equalsIgnoreCase("pseudobulk")){
+                        log.error("ERROR: The parameter 'variant_workflow_type' must be set to 'pseudobulk' when there are no bulk samples in the input.csv. Exiting.")
+                        exit 1
+                    }
+                }
+            }
+        }
+
+        SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK(
+            pseudobulk_input_bam,
+            params.genome,
             params.reference,
             params.dbsnp,
             params.dbsnp_index,
+            params.mills,
+            params.mills_index,
+            params.onekg,
+            params.onekg_index,
+            ch_reads,
+            ch_pseudobulk_reads,
+            ch_bam_recaltab,
             params.calling_intervals_filename,
             params.somatic_variant_caller,
             params.publish_dir,
             params.enable_publish
         )
+
+        ch_picard_version = SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK.out.picard_version
+        ch_samtools_version = SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK.out.samtools_version
+        ch_somatic_vcf = SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK.out.vcf
+        
+    } else if ("${params.variant_workflow_type}".equalsIgnoreCase("panel_of_normal")) {
+        /*
+        ========================================================================================
+            PANEL OF NORMAL
+        ========================================================================================
+        */
+
+        // Setting the bulk channel using the isbulk set to true samples
+        ch_reads_bulk = ch_reads.filter { it[3].toBoolean() }
+        ch_bam_bulk = ch_bam_recaltab.join(ch_reads_bulk).map 
+            { sample_name, bam, bai, recal_table, fasta, groups, isbulk -> [sample_name, isbulk, [bam, bai], recal_table] }
+
+        // Setting the single/tumor channel using the samples which has isbulk set as false
+        ch_reads_single = ch_reads.filter { !it[3].toBoolean() }
+        ch_bam_single = ch_bam_recaltab.join(ch_reads_single).map 
+            { sample_name, bam, bai, recal_table, fasta, groups, isbulk -> [sample_name, isbulk, [bam, bai], recal_table] }
+
+        ch_input = ch_bam_single.combine( ch_bam_bulk, by: 3 )
+
+        SOMATIC_VARIANT_WORKFLOW_PANELNORMAL (
+                ch_bam_bulk,
+                ch_bam_single,
+                params.reference,
+                params.dbsnp,
+                params.dbsnp_index,
+                params.calling_intervals_filename,
+                params.panel_of_normal_vcf,
+                params.publish_dir,
+                params.enable_publish
+            )
+
+        ch_picard_version = Channel.empty()
+        ch_samtools_version = Channel.empty()
+        ch_somatic_vcf = SOMATIC_VARIANT_WORKFLOW_PANELNORMAL.out.vcf
+
+    } else{
+
+        /*
+        ========================================================================================
+            MATCH NORMAL
+        ========================================================================================
+        */
+
+        // Setting the bulk channel using the isbulk set to true samples
+        ch_reads_bulk = ch_reads.filter { it[3].toBoolean() }
+        ch_bam_bulk = ch_bam_recaltab.join(ch_reads_bulk).map 
+            { sample_name, bam, bai, recal_table, fasta, groups, isbulk -> [sample_name, [bam, bai], recal_table, groups] }
+
+        // Setting the single/tumor channel using the samples which has isbulk set as false
+        ch_reads_single = ch_reads.filter { !it[3].toBoolean() }
+        ch_bam_single = ch_bam_recaltab.join(ch_reads_single).map 
+            { sample_name, bam, bai, recal_table, fasta, groups, isbulk -> [sample_name, [bam, bai], recal_table, groups] }
+
+        ch_input = ch_bam_single.combine( ch_bam_bulk, by: 3 )
+
+        SOMATIC_VARIANT_WORKFLOW_MATCHNORMAL (
+                ch_input,
+                params.reference,
+                params.dbsnp,
+                params.dbsnp_index,
+                params.calling_intervals_filename,
+                params.somatic_variant_caller,
+                params.publish_dir,
+                params.enable_publish
+            )
+
+        ch_picard_version = Channel.empty()
+        ch_samtools_version = Channel.empty()
+        ch_somatic_vcf = SOMATIC_VARIANT_WORKFLOW_MATCHNORMAL.out.vcf
+
+    }
 
     ch_vep_version = Channel.empty()
     ch_bcftools_version = Channel.empty()
@@ -235,7 +265,7 @@ workflow {
         */
 
         VARIANT_ANNOTATION_WF (
-                SOMATIC_VARIANT_WORKFLOW.out.vcf,
+                ch_somatic_vcf,
                 params.genome,
                 params.reference,
                 params.vep_cache,
@@ -350,7 +380,7 @@ workflow {
             session_id: workflow.sessionId,
             mode: params.mode,
             genome: params.genome,
-            generate_pseudobulk: params.pseudo_bulk_run
+            variant_workflow_type: params.variant_workflow_type
     ]
 
     MULTIQC_WF ( collect_mqc,

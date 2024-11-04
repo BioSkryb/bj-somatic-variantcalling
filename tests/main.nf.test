@@ -10,7 +10,7 @@ nextflow_pipeline {
                 publish_dir = "${outputDir}/results"
                 input_csv   = "$baseDir/tests/data/inputs/input2.csv"
                 timestamp = "test"
-                pseudo_bulk_run = "true"
+                variant_workflow_type = "pseudobulk"
                 is_bam = "true"
                 architecture = "x86"
             }

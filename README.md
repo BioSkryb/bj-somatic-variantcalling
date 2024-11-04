@@ -4,7 +4,7 @@
 Pipeline processes WGS/Exome/Targeted sequencing data and performs comprehensive evaluation of single-cell libraries, and calls somatic SNP/Indel variants.
 
 # Pipeline Overview
-Pipeline requires normal bulk sample for each group of single-cell samples. If bulk sample is not provided, then the user must set pseudo_bulk_run to true and pipeline will create a pseudobulk by subsampling uniformly across all single-cell samples. At minimum 3 single-cell samples are required per group to create normal psedobulk sample.
+Pipeline requires normal bulk sample for each group of single-cell samples. If bulk sample is not provided, then the user must set "variant_workflow_type" to "pseudobulk" and pipeline will create a pseudobulk by subsampling uniformly across all single-cell samples. At minimum 3 single-cell samples are required per group to create normal psedobulk sample.
 
 Following are the steps and tools that pipeline uses to perform the analyses:
 
@@ -122,7 +122,7 @@ chr22_testsample4_S1_L001,s3://bioskryb-public-data/pipeline_resources/dev-resou
 chr22_testsample5_S1_L001,s3://bioskryb-public-data/pipeline_resources/dev-resources/local_test_files/chr22_testsample5_S1_L001_R1_001.fastq.gz,s3://bioskryb-public-data/pipeline_resources/dev-resources/local_test_files/chr22_testsample5_S1_L001_R2_001.fastq.gz,GROUP2,false,
 chr22_testsample6_S1_L001,s3://bioskryb-public-data/pipeline_resources/dev-resources/local_test_files/chr22_testsample6_S1_L001_R1_001.fastq.gz,s3://bioskryb-public-data/pipeline_resources/dev-resources/local_test_files/chr22_testsample6_S1_L001_R2_001.fastq.gz,GROUP2,false,
 ```
-Input.csv with fastq as input with 2 groups and both the groups have 3 single/tumor sample without a bulk sample. The parameter `--pseudo_bulk_run` should be set to `true` for this run.
+Input.csv with fastq as input with 2 groups and both the groups have 3 single/tumor sample without a bulk sample. The parameter `--variant_workflow_type` should be set to `pseudobulk` for this run.
 
 ```
 biosampleName,read1,read2,groups,isbulk,bam
@@ -144,7 +144,7 @@ chr22_testsample4_S1_L001,,,GROUP2,true,s3://bioskryb-public-data/pipeline_resou
 chr22_testsample5_S1_L001,,,GROUP2,false,s3://bioskryb-public-data/pipeline_resources/dev-resources/local_test_files/chr22_testsample5_S1_L001.bam
 chr22_testsample6_S1_L001,,,GROUP2,false,s3://bioskryb-public-data/pipeline_resources/dev-resources/local_test_files/chr22_testsample6_S1_L001.bam
 ```
-Input.csv with bam as input with 2 groups and both the groups have 3 single/tumor sample without a bulk sample. The parameters `is_bam` and  `--pseudo_bulk_run` should be set to `true` for this run.
+Input.csv with bam as input with 2 groups and both the groups have 3 single/tumor sample without a bulk sample. The parameters `is_bam` and  `--variant_workflow_type` should be set to `pseudobulk` for this run.
 
 ```
 biosampleName,read1,read2,groups,isbulk,bam
@@ -159,9 +159,14 @@ chr22_testsample6_S1_L001,,,GROUP2,false,s3://bioskryb-public-data/pipeline_reso
 
 **Optional Parameters**: 
 
-- **pseudo_bulk_run**: The pseudo bulk workflow is an optional feature that generates a pseudo bulk fastq file when all provided inputs are single/tumor samples (i.e., isbulk is set to false for all samples). To enable this workflow, set the `--pseudo_bulk_run` flag to `true`.
+- **variant_workflow_type**: This parameter sets the appropriate workflow to run based on the provided samples:
+                - match_normal: if matched normal is provided for the set of single/tumor sample.
+                - panel_normal: if there are panel of normal samples provided along with set of single cell/tumor samples.
+                - pseudobulk: if no normal samples are provided.The pseudo bulk workflow is an optional feature that generates a pseudo bulk fastq file when all provided inputs are single/tumor samples
 
 - **somatic_variant_caller**: There's another optional parameter available, `--somatic_variant_caller`, which allows users to select the Variant Caller. The options are `tnscope` or `tnseq`, with tnscope being the default choice.
+
+- **panel_of_normal_vcf**: This parameter allows you to specify a panel of VCF files when running the `panel_normal` workflow. If this parameter is not provided, a panel of normal VCF will be created by default.
 
 **Optional Modules**
 
@@ -207,8 +212,12 @@ Script Options: see nextflow.config
 
     [optional]
 
-    --pseudo_bulk_run           BOOL    To generates a pseudo bulk fastq file when all provided inputs are single/tumor samples (i.e., isbulk is set to false for all samples).
-                                        DEFAULT: false
+    --variant_workflow_type     STR    This parameter sets the appropriate workflow to run based on the provided samples:
+                                            - match_normal: if one normal sample is provided for the set of single/tumor samples.
+                                            - panel_normal: if more than one normal sample is provided for the set of single/tumor samples.
+                                            - pseudobulk: if no normal samples are provided.
+
+    --panel_of_normal_vcf      FILE    Path to panel of normal vcf file
 
     --somatic_variant_caller    STR     To select the Variant Caller. The options are tnscope or tnseq.
                                         DEFAULT: tnscope
@@ -259,7 +268,7 @@ The nf-test for this repository is saved at tests/ folder.
                 publish_dir = "${outputDir}/results"
                 input_csv   = "$baseDir/tests/data/inputs/input2.csv"
                 timestamp = "test"
-                pseudo_bulk_run = "true"
+                variant_workflow_type = "pseudobulk"
                 is_bam = "true"
                 architecture = "x86"
             }
