@@ -163,6 +163,7 @@ chr22_testsample6_S1_L001,,,GROUP2,false,s3://bioskryb-public-data/pipeline_reso
                 - match_normal: if matched normal is provided for the set of single/tumor sample.
                 - panel_normal: if there are panel of normal samples provided along with set of single cell/tumor samples.
                 - pseudobulk: if no normal samples are provided.The pseudo bulk workflow is an optional feature that generates a pseudo bulk fastq file when all provided inputs are single/tumor samples
+                - somatic_heurestic_filter: Uses dnascope to make variant calls and then uses a heuristic filter to keep somatic variants and filter out germline. It doesn't require bulk samples and creates a phylogenetic tree.
 
 - **somatic_variant_caller**: There's another optional parameter available, `--somatic_variant_caller`, which allows users to select the Variant Caller. The options are `tnscope` or `tnseq`, with tnscope being the default choice.
 
