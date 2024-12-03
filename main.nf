@@ -4,11 +4,13 @@ import groovy.json.JsonOutput
 include { printHeader; helpMessage } from './help' params ( params )
 include { PUBLISH_INPUT_DATASET_WF } from './nf-bioskryb-utils/modules/bioskryb/publish_input_dataset/main.nf' addParams(timestamp: params.timestamp)
 include { SOMATIC_VARIANT_WORKFLOW_MATCHNORMAL; SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK; SOMATIC_VARIANT_WORKFLOW_PANELNORMAL } from './nf-bioskryb-utils/subworkflows/somatic_variant_calling/main.nf' params ( params )
+include { SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter } from './nf-bioskryb-utils/subworkflows/somatic_heuristic_filter/main.nf' params ( params )
 include { VARIANT_ANNOTATION_WF } from './nf-bioskryb-utils/subworkflows/variant_annotation/main.nf' params ( params )
 include { SENTIEON_DRIVER_TNSCOPE } from './nf-bioskryb-utils/modules/sentieon/driver/tnscope/main.nf' addParams( timestamp: params.timestamp )
 include { SENTIEON_DRIVER_TNSEQ } from './nf-bioskryb-utils/modules/sentieon/driver/tnseq/main.nf' addParams( timestamp: params.timestamp )
 include { SENTIEON_DRIVER_METRICS_WF } from './nf-bioskryb-utils/modules/sentieon/driver/metrics/main.nf' addParams(timestamp: params.timestamp)
 include { SENTIEON_DRIVER_COVERAGEMETRICS_WF } from './nf-bioskryb-utils/modules/sentieon/driver/coveragemetrics/main.nf' addParams(timestamp: params.timestamp)
+include { SENTIEON_DNASCOPE } from './nf-bioskryb-utils/modules/sentieon/driver/dnascope/main.nf' addParams(timestamp: params.timestamp)
 include { CUSTOM_DATA_PROCESSING_WF } from './modules/local/custom_data_processing/main.nf' addParams(timestamp: params.timestamp)
 include { CUSTOM_REPORT_WF } from './modules/local/custom_report/main.nf' addParams(timestamp: params.timestamp)
 include { MULTIQC_WF } from './nf-bioskryb-utils/modules/multiqc/main.nf' addParams(timestamp: params.timestamp)
@@ -179,7 +181,67 @@ workflow {
         ch_samtools_version = SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK.out.samtools_version
         ch_somatic_vcf = SOMATIC_VARIANT_WORKFLOW_PSEUDOBULK.out.vcf
         
-    } else if ("${params.variant_workflow_type}".equalsIgnoreCase("panel_of_normal")) {
+    } 
+    else if ("${params.variant_workflow_type}".equalsIgnoreCase("somatic_heuristic_filter")) {
+        /*
+        ========================================================================================
+            SOMATIC HEURISTIC FILTER
+        ========================================================================================
+        */
+        SENTIEON_DNASCOPE ( 
+                                 ch_bam_only,
+                                 params.reference,
+                                 params.calling_intervals_filename,
+                                 params.dbsnp,
+                                 params.dbsnp_index,
+                                 params.dnascope_model,
+                                 params.pcrfree,
+                                 params.ploidy,
+                                 "gvcf",
+                                 params.publish_dir,
+                                 params.enable_publish
+                               )
+
+        heuristicmode_vcf_input = ch_reads.join(SENTIEON_DNASCOPE.out.vcf).map
+            { sample_name, files, groups, isbulk, vcf -> [sample_name, [vcf[0], vcf[1]], groups] }
+        heuristicmode_bam_input = ch_reads.join(ch_bam_only).map
+            { sample_name, files, groups, isbulk, bam, bai -> [sample_name, [bam, bai], groups] }
+
+        SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter (
+            heuristicmode_bam_input,
+            heuristicmode_vcf_input,
+            params.reference,
+            params.chrs,
+            params.num_lines_split_query_table,
+            params.cutoff_as,
+            params.cutoff_prop_clipped_reads,
+            params.cutoff_num_hq_frag,
+            params.filter_bp_pos,
+            params.cutoff_prop_bp,
+            params.cutoff_sd_indiv,
+            params.cutoff_mad_indiv,
+            params.cutoff_sd_both,
+            params.cutoff_mad_both,
+            params.cutoff_sd_extreme,
+            params.cutoff_mad_extreme,
+            params.num_lines_get_list_pos_group,
+            params.cutoff_depth_manual,
+            params.cutoff_numreads_variant_manual,
+            params.cutoff_prev_na_manual,
+            params.cutoff_prev_var_manual,
+            params.sequoia_cutoff_binomial,
+            params.sequoia_cutoff_rho,
+            params.publish_dir,
+            params.disable_publish,
+            params.enable_publish
+        )
+
+        ch_picard_version = Channel.empty()
+        ch_samtools_version = Channel.empty()
+        ch_somatic_vcf = SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter.out.vcf
+
+    }
+    else if ("${params.variant_workflow_type}".equalsIgnoreCase("panel_of_normal")) {
         /*
         ========================================================================================
             PANEL OF NORMAL
