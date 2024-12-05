@@ -217,6 +217,7 @@ Script Options: see nextflow.config
                                             - match_normal: if one normal sample is provided for the set of single/tumor samples.
                                             - panel_normal: if more than one normal sample is provided for the set of single/tumor samples.
                                             - pseudobulk: if no normal samples are provided.
+                                            - somatic_heurestic_filter: Uses dnascope to make variant calls and then uses a heuristic filter to keep somatic variants and filter out germline. It doesn't require bulk samples.
 
     --panel_of_normal_vcf      FILE    Path to panel of normal vcf file
 
