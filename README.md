@@ -1,5 +1,5 @@
 
-# BJ-SomaticVariantCalling
+# BaseJumper BJ-SomaticVariantCalling
 
 Pipeline processes WGS/Exome/Targeted sequencing data and performs comprehensive evaluation of single-cell libraries, and calls somatic SNP/Indel variants.
 
