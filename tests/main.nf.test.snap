@@ -3,18 +3,30 @@
         "content": [
             "pseudobulk_input.csv:md5,0678b3a85e2df7cf08e0ff32dbca8d3b"
         ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
         "timestamp": "2025-01-16T14:41:54+0000"
     },
     "selected_metrics_mqc": {
         "content": [
-            "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,bb78d1f5489b8bf1078c830ff01c5225"
+            "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,c5c2828ff3aae16aa5793784961cd765"
         ],
-        "timestamp": "2025-01-16T14:41:54+0000"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2025-03-17T14:50:43.241504704"
     },
     "all_metrics_mqc": {
         "content": [
-            "nf-wgs-pipeline_all_metrics_mqc.txt:md5,70c3ba47ea711c3d58379c4175c6a6a4"
+            "nf-wgs-pipeline_all_metrics_mqc.txt:md5,908bd3018810cd2ff3422fd2e8a4df95"
         ],
-        "timestamp": "2025-01-16T14:41:54+0000"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2025-03-17T14:50:43.227522033"
     }
 }
