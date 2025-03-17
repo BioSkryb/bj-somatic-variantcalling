@@ -1,5 +1,5 @@
 
-# BaseJumper BJ-SomaticVariantCalling
+# BJ-SomaticVariantCalling
 
 Pipeline processes WGS/Exome/Targeted sequencing data and performs comprehensive evaluation of single-cell libraries, and calls somatic SNP/Indel variants.
 
@@ -175,6 +175,7 @@ chr22_testsample6_S1_L001,,,GROUP2,false,s3://bioskryb-public-data/pipeline_reso
 This pipeline includes optional modules. You can choose to include or exclude these modules by adjusting the following parameters:
 
 - `--skip_variant_annotation`: Set this to `true` to exclude the Variant Annotation module. By default, it is set to `true`.
+- `--skip_sigprofile`: Set this to `false` to enable the Mutational Signature module. By default, it is set to `false`.
 
 
 **Outputs**
@@ -229,6 +230,9 @@ Script Options: see nextflow.config
 
     --skip_variant_annotation   BOOL    Whether to skip variant annotation
                                         DEFAULT: null
+                                        
+    --skip_sigprofile           BOOL    Whether to skip Mutational Signature
+                                        DEFAULT: false
 
     --help                      BOOL    Display help message
 

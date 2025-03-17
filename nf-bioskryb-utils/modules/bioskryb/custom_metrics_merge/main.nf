@@ -29,7 +29,7 @@ workflow{
     
     ch_metrics = Channel.fromPath(params.metrics_dir)
     
-    CUSTOM_DATA_PROCESSING_WF(
+    CUSTOM_METRICS_MERGE (
                                 ch_metrics,
                                 params.publish_dir,
                                 params.enable_publish

@@ -4,8 +4,8 @@ params.timestamp = ""
 process CUSTOM_RSCRIPT_CONCAT_FILTER_GROUPLEVEL {
     tag "${group}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled:"$enable_publish"
-    
-    
+
+
     input:
     tuple val(group), path(df_files)
     path (rscript)
@@ -13,7 +13,7 @@ process CUSTOM_RSCRIPT_CONCAT_FILTER_GROUPLEVEL {
     val (cutoff_beta)
     val( publish_dir )
     val( enable_publish )
-  
+
     output:
     tuple val(group), path("res_usable_variants_${group}.tsv")
 
@@ -27,5 +27,5 @@ process CUSTOM_RSCRIPT_CONCAT_FILTER_GROUPLEVEL {
     
     
     """
-    
+
 }
