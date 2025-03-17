@@ -2,45 +2,24 @@ nextflow.enable.dsl=2
 params.timestamp = ""
 
 process CUSTOM_GET_LIST_POS_GROUP {
-    tag "CUSTOM_GET_LIST_POS_GROUP_${group}_${chr}"
+    tag "${group}"
     publishDir "${publish_dir}_${params.timestamp}/CUSTOM_GET_LIST_POS_GROUP/", enabled: "$enable_publish"
-    
+
     input:
-    tuple val(group), path(res_tables), val(chr)
-    val(num_lines)
+    tuple val(group), path(res_tables)
     val(publish_dir)
     val(enable_publish)
 
-  
-    output:
-    path("list_pos_*.txt")
 
-    
+    output:
+    tuple val(group), path("list_pos_variant_${group}.txt")
+
+
     script:
     """
     
-    ls 
+    ls ;
   
-    cat res_table_filtered* |  grep -P "\\t${chr}\\t" | cut -f2,3 | sort -u > temp.txt
-    
-    numlines=`wc -l temp.txt | awk '{print \$1}'`;
-
-    touch list_pos_group_${group}_chr_${chr}_file_xaa.txt;
-
-    if [[ \${numlines} != 0 ]];
-    then
-
-	    split -l ${num_lines} temp.txt
-    
-    	    ls x* | while read file;
-    	    do
-    
-        	mv \${file} list_pos_group_${group}_chr_${chr}_file_\${file}.txt
-        
-    	    done
-    fi
-
-
-
+    cat df_query_*.tsv |   cut -f1  |cut -d "_" -f1,2 | sort -u | awk -v OFS="\\t" -v FS="_" '{print \$1,\$2}' > list_pos_variant_${group}.txt
     """
 }

@@ -13,6 +13,8 @@ nextflow_pipeline {
                 variant_workflow_type = "pseudobulk"
                 is_bam = "true"
                 architecture = "x86"
+                max_memory = "28.GB"
+                max_cpus = 8
             }
         }
 

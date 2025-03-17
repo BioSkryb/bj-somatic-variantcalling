@@ -4,8 +4,8 @@ params.timestamp = ""
 process CUSTOM_RSCRIPT_FILTER_GROUPLEVEL_PILEUP_SAMPLE {
     tag "${group}_${chr}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled:"$enable_publish"
-    
-    
+
+
     input:
     tuple val(group), val(gender), val(chr), path(df_files)
     path (rscript)
@@ -16,7 +16,7 @@ process CUSTOM_RSCRIPT_FILTER_GROUPLEVEL_PILEUP_SAMPLE {
     val (cutoff_presence_prev)
     val( publish_dir )
     val( enable_publish )
-  
+
     output:
     tuple val(group), val(chr), path("res_grouplevel_filtered_pileup_${chr}_${group}.tsv")
 
@@ -29,5 +29,5 @@ process CUSTOM_RSCRIPT_FILTER_GROUPLEVEL_PILEUP_SAMPLE {
     
     
     """
-    
+
 }

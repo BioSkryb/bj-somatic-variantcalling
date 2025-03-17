@@ -52,6 +52,8 @@ process GENERATE_PANEL_OF_NORMAL {
     input:
     path(vcf)
     path(vcf_index)
+    val(publish_dir)
+    val(enable_publish)
 
     output:
     tuple path("panel_of_normal.vcf.gz"), path("panel_of_normal.vcf.gz.tbi")
@@ -226,7 +228,7 @@ workflow {
                                                 params.publish_dir, 
                                                 params.enable_publish ) 
 
-        GENERATE_PANEL_OF_NORMAL ( SENTIEON_DRIVER_TNSCOPE_PANEL_OF_NORMAL.out.vcf_only.collect(), SENTIEON_DRIVER_TNSCOPE_PANEL_OF_NORMAL.out.vcf_index_only.collect() )
+        GENERATE_PANEL_OF_NORMAL ( SENTIEON_DRIVER_TNSCOPE_PANEL_OF_NORMAL.out.vcf_only.collect(), SENTIEON_DRIVER_TNSCOPE_PANEL_OF_NORMAL.out.vcf_index_only.collect(), params.publish_dir, params.enable_publish )
 
         // combine the tumor to panel of normal pairs
         ch_tumor = samples_ch.sc.combine(GENERATE_PANEL_OF_NORMAL.out)

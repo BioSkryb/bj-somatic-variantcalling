@@ -2,11 +2,11 @@ nextflow.enable.dsl=2
 
 // IMPORT MODULES
 
-include { MERGE_VCFS } from '../../modules/bioskryb/merge_vcfs/main.nf' addParams( timestamp: params.timestamp )
-include { CONCAT_VCFS } from '../../modules/bioskryb/concat_vcfs/main.nf' addParams( timestamp: params.timestamp )
-include { GATK_VARIANTSTOTABLE } from '../../modules/gatk/variantstotable/main.nf' addParams(timestamp: params.timestamp)
-// include { CUSTOM_EXPANDED_FIELDS } from '../../modules/bioskryb/custom_expanded_fields/main.nf' addParams(timestamp: params.timestamp)
-include { VARIANTQC } from '../../modules/variantqc/main.nf' addParams(timestamp: params.timestamp)
+include { MERGE_VCFS } from '../../modules/bioskryb/merge_vcfs/main.nf'
+include { CONCAT_VCFS } from '../../modules/bioskryb/concat_vcfs/main.nf'
+include { GATK_VARIANTSTOTABLE } from '../../modules/gatk/variantstotable/main.nf'
+// include { CUSTOM_EXPANDED_FIELDS } from '../../modules/bioskryb/custom_expanded_fields/main.nf'
+include { VARIANTQC } from '../../modules/variantqc/main.nf'
 
 process PREPROCESS_VCF {
     tag "${sample_name}"
