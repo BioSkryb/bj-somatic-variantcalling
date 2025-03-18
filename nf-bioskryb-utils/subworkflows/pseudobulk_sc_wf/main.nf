@@ -2,10 +2,10 @@ nextflow.enable.dsl=2
 
 // IMPORT MODULES
 
-include { CUSTOM_BAM_SUBSAMPLE } from '../../modules/bioskryb/custom_bam_subsample/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_BAM_CONCATENATE_FILES } from '../../modules/bioskryb/custom_bam_concatenate_files/main.nf' addParams( timestamp: params.timestamp )
-include { PICARD_ADDORREPLACEREADGROUPS } from '../../modules/picard/addorreplacereadgroups/main.nf' addParams( timestamp: params.timestamp )
-include { SENTIEON_ALGORITHM } from '../../modules/sentieon/driver/alignment/main.nf' addParams( timestamp: params.timestamp )
+include { CUSTOM_BAM_SUBSAMPLE } from '../../modules/bioskryb/custom_bam_subsample/main.nf'
+include { CUSTOM_BAM_CONCATENATE_FILES } from '../../modules/bioskryb/custom_bam_concatenate_files/main.nf'
+include { PICARD_ADDORREPLACEREADGROUPS } from '../../modules/picard/addorreplacereadgroups/main.nf'
+include { SENTIEON_ALGORITHM } from '../../modules/sentieon/driver/alignment/main.nf'
 
 workflow PSEUDO_BULK_WF {
 

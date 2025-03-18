@@ -11,6 +11,7 @@ process SENTIEON_DRIVER_METRICS {
     path base_metrics_intervals
     path wgs_or_target_intervals
     val mode
+    val type
     val(publish_dir)
     val(enable_publish)
 
@@ -18,7 +19,7 @@ process SENTIEON_DRIVER_METRICS {
     output:
     tuple val(sample_name), file("*sentieonmetrics*"), emit: metrics_tuple
     path "*sentieonmetrics*", emit: metrics
-    tuple val(sample_name), file("*.dedup.alignmentstat_sentieonmetrics.txt"), emit: alignment_metrics
+    tuple val(sample_name), file("*.${type}.alignmentstat_sentieonmetrics.txt"), emit: alignment_metrics
     path("sentiieon_driver_metrics_version.yml"), emit: version
     
     script:
@@ -36,13 +37,13 @@ process SENTIEON_DRIVER_METRICS {
     
         sentieon driver  -t $task.cpus -r ${fasta_ref}/genome.fa -i ${bam} ${bqsr} \
                 --interval ${wgs_or_target_intervals} \
-                --algo GCBias --summary ${sample_name}.gcbias_summary.sentieonmetrics.txt ${sample_name}.gcbias.sentieonmetrics.txt \
-                --algo AlignmentStat ${sample_name}.dedup.alignmentstat_sentieonmetrics.txt \
-                --algo InsertSizeMetricAlgo ${sample_name}.insertsizemetricalgo.sentieonmetrics.txt \
-                --algo MeanQualityByCycle ${sample_name}.meanqualitybycycle.sentieonmetrics.txt \
-                --algo CoverageMetrics ${sample_name}.cov_sentieonmetrics
+                --algo GCBias --summary ${sample_name}.${type}.gcbias_summary.sentieonmetrics.txt ${sample_name}.${type}.gcbias.sentieonmetrics.txt \
+                --algo AlignmentStat ${sample_name}.${type}.alignmentstat_sentieonmetrics.txt \
+                --algo InsertSizeMetricAlgo ${sample_name}.${type}.insertsizemetricalgo.sentieonmetrics.txt \
+                --algo MeanQualityByCycle ${sample_name}.${type}.meanqualitybycycle.sentieonmetrics.txt \
+                --algo CoverageMetrics ${sample_name}.${type}.cov_sentieonmetrics
                 
-        #        --algo HsMetricAlgo --targets_list ${wgs_or_target_intervals} --baits_list ${wgs_or_target_intervals} ${sample_name}.hsmetricalgo.sentieonmetrics.txt
+        #        --algo HsMetricAlgo --targets_list ${wgs_or_target_intervals} --baits_list ${wgs_or_target_intervals} ${sample_name}.${type}.hsmetricalgo.sentieonmetrics.txt
         
         # These files are not created in exome. creating dummy files?
         touch ${sample_name}.wgsmetricsalgo.sentieonmetrics.txt
@@ -65,19 +66,19 @@ process SENTIEON_DRIVER_METRICS {
         
         sentieon driver -t $task.cpus -r ${fasta_ref}/genome.fa -i ${bam} ${bqsr} \
                 --interval ${base_metrics_intervals} \
-                --algo GCBias --summary ${sample_name}.gcbias_summary.sentieonmetrics.txt ${sample_name}.gcbias.sentieonmetrics.txt \
-                --algo AlignmentStat ${sample_name}.dedup.alignmentstat_sentieonmetrics.txt \
-                --algo InsertSizeMetricAlgo ${sample_name}.insertsizemetricalgo.sentieonmetrics.txt \
-                --algo MeanQualityByCycle ${sample_name}.meanqualitybycycle.sentieonmetrics.txt \
-                --algo CoverageMetrics ${sample_name}.cov_sentieonmetrics --omit_base_output --omit_locus_stat --omit_sample_stat
+                --algo GCBias --summary ${sample_name}.${type}.gcbias_summary.sentieonmetrics.txt ${sample_name}.${type}.gcbias.sentieonmetrics.txt \
+                --algo AlignmentStat ${sample_name}.${type}.alignmentstat_sentieonmetrics.txt \
+                --algo InsertSizeMetricAlgo ${sample_name}.${type}.insertsizemetricalgo.sentieonmetrics.txt \
+                --algo MeanQualityByCycle ${sample_name}.${type}.meanqualitybycycle.sentieonmetrics.txt \
+                --algo CoverageMetrics ${sample_name}.${type}.cov_sentieonmetrics --omit_base_output --omit_locus_stat --omit_sample_stat
         
         sentieon driver -t $task.cpus -r ${fasta_ref}/genome.fa -i ${bam} ${bqsr} \
                 --interval ${wgs_or_target_intervals} \
-                --algo WgsMetricsAlgo ${sample_name}.wgsmetricsalgo.sentieonmetrics.txt
+                --algo WgsMetricsAlgo ${sample_name}.${type}.wgsmetricsalgo.sentieonmetrics.txt
                 
         # FROM CROMWELL - these files are not created in wgs. creating dummy files?
-        # touch ${sample_name}.coveragemetrics.sentieonmetrics.sample_summary
-        touch ${sample_name}.hsmetricalgo.sentieonmetrics.txt
+        # touch ${sample_name}.${type}.coveragemetrics.sentieonmetrics.sample_summary
+        touch ${sample_name}.${type}.hsmetricalgo.sentieonmetrics.txt
         
         export SENTIEON_VER="202308.01"
         echo Sentieon: \$SENTIEON_VER > sentiieon_driver_metrics_version.yml
@@ -97,11 +98,11 @@ process SENTIEON_DRIVER_METRICS {
         
         sentieon driver  -t $task.cpus -r ${fasta_ref}/genome.fa -i ${bam} \
                --interval ${base_metrics_intervals} \
-               --algo WgsMetricsAlgo ${sample_name}.wgsmetricsalgo.sentieonmetrics.txt \
-               --algo GCBias --summary ${sample_name}.gcbias_summary.sentieonmetrics.txt ${sample_name}.gcbias.sentieonmetrics.txt \
-               --algo AlignmentStat ${sample_name}.dedup.alignmentstat_sentieonmetrics.txt \
-               --algo InsertSizeMetricAlgo ${sample_name}.insertsizemetricalgo.sentieonmetrics.txt \
-               --algo CoverageMetrics ${sample_name}.cov_sentieonmetrics --omit_base_output --omit_locus_stat --omit_sample_stat
+               --algo WgsMetricsAlgo ${sample_name}.${type}.wgsmetricsalgo.sentieonmetrics.txt \
+               --algo GCBias --summary ${sample_name}.${type}.gcbias_summary.sentieonmetrics.txt ${sample_name}.${type}.gcbias.sentieonmetrics.txt \
+               --algo AlignmentStat ${sample_name}.${type}.alignmentstat_sentieonmetrics.txt \
+               --algo InsertSizeMetricAlgo ${sample_name}.${type}.insertsizemetricalgo.sentieonmetrics.txt \
+               --algo CoverageMetrics ${sample_name}.${type}.cov_sentieonmetrics --omit_base_output --omit_locus_stat --omit_sample_stat
         
         export SENTIEON_VER="202308.01"
         echo Sentieon: \$SENTIEON_VER > sentiieon_driver_metrics_version.yml
@@ -119,6 +120,7 @@ workflow SENTIEON_DRIVER_METRICS_WF {
         ch_base_metrics_intervals
         ch_wgs_or_target_intervals
         ch_mode
+        ch_type
         ch_publish_dir
         ch_enable_publish
         
@@ -129,6 +131,7 @@ workflow SENTIEON_DRIVER_METRICS_WF {
                                   ch_base_metrics_intervals,
                                   ch_wgs_or_target_intervals,
                                   ch_mode,
+                                  ch_type,
                                   ch_publish_dir,
                                   ch_enable_publish
                                 )
@@ -141,7 +144,7 @@ workflow SENTIEON_DRIVER_METRICS_WF {
         version = SENTIEON_DRIVER_METRICS.out.version
 }
 
-include { CUSTOM_METRICS_MERGE } from '../../../bioskryb/custom_metrics_merge/main.nf' addParams( timestamp: params.timestamp )
+include { CUSTOM_METRICS_MERGE } from '../../../bioskryb/custom_metrics_merge/main.nf'
 
 
 workflow {
@@ -167,6 +170,7 @@ workflow {
         params.base_metrics_intervals,
         params.wgs_or_target_intervals,
         params.mode,
+        "dedup",
         params.publish_dir,
         params.enable_publish
     )

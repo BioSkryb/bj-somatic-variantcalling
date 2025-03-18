@@ -58,7 +58,7 @@ process COUNT_READS_FASTQ {
     val(enable_publish)
 
     output:
-    tuple val(sample_name), path(reads), env(total_reads), emit: read_counts
+    tuple val(sample_name), path(reads), path("${sample_name}_total_reads.txt"), emit: read_counts
     path "${sample_name}_read_counts.txt", emit: read_counts_file
 
     script:
@@ -92,6 +92,9 @@ process COUNT_READS_FASTQ {
     # Create the output file with header and counts
     echo -e "sample_name,reads" > ${sample_name}_read_counts.txt
     echo -e "${sample_name},\$total_reads" >> ${sample_name}_read_counts.txt
+
+    # Create a file to store the total reads count
+    echo "\$total_reads" > ${sample_name}_total_reads.txt
     """
 }
 

@@ -79,7 +79,7 @@ workflow {
                   .set{ ch_bam }
     } else if(params.input_csv != "") {
         ch_bam = Channel.fromPath( params.input_csv ).splitCsv( header:true )
-                                .map { row -> [ row.sampleId, row.bam, row.bam + ".bai"  ] }
+                                .map { row -> [ row.biosampleName, row.bam, row.bam + ".bai"  ] }
     }
     ch_bam.view()
     ch_bam.ifEmpty{ exit 1, "ERROR: No BAM files specified either via --bam or --input_csv" }

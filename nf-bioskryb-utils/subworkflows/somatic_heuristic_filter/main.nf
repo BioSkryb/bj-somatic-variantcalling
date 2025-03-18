@@ -1,18 +1,21 @@
 nextflow.enable.dsl=2
 
 // IMPORT MODULES
-include { PREPROCESS_VCF } from '../../modules/bcftools/filter_norm_addqual/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_SPLIT_QUERY_TABLE_CHR } from '../../modules/bioskryb/custom_split_query_table_chr/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_SPLIT_BAM_CHR } from '../../modules/bioskryb/custom_split_bam_chr/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_BAM_PILEUP_FILTER } from '../../modules/bioskryb/custom_bam_pileup_filter/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_CELL_LEVEL_CREATE_TABLE } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_1_celllevel_create_table/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_2_CELL_LEVEL_CONCAT_FILTER_TABLE } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_2_celllevel_concat_filter_table/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_GET_LIST_POS_GROUP } from '../../modules/bioskryb/custom_get_list_pos_group/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_BAM_GROUP_PILEUP_CHR } from '../../modules/bioskryb/custom_bam_group_pileup_chr/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_3_GROUPLEVEL_PROCESS_PILEUP_SAMPLE } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_3_grouplevel_process_pileup_sample/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_4_CREATE_TABNR_TABNV } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_4_create_tabnr_tabnv/main.nf' addParams( timestamp: params.timestamp )
-include { SEQUOIA } from '../../modules/sequoia/main.nf' addParams( timestamp: params.timestamp )
-include { SUBSET_VCF_VARIANTS } from '../../modules/bioskryb/subset_vcf_variants/main.nf' addParams( timestamp: params.timestamp )
+include { PREPROCESS_VCF } from '../../modules/bcftools/filter_norm_addqual/main.nf'
+include { MERGE_PROCESSED_VCF } from '../../modules/bcftools/merge_processed_vcf/main.nf'
+include { CUSTOM_GET_LIST_POS_GROUP } from '../../modules/bioskryb/custom_get_list_pos_group/main.nf'
+include { CUSTOM_BAM_GROUP_PILEUP } from '../../modules/bioskryb/custom_bam_group_pileup/main.nf'
+include { CREATE_TAB_NVNR } from '../../modules/bioskryb/create_tab_nvnr/main.nf'
+include { SEQUOIA_BINOM_BETABINOM_TAB_NV_NR } from '../../modules/bioskryb/sequoia_binom_betabinom_tab_nv_nr/main.nf'
+include { CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR } from '../../modules/bioskryb/concat_filter_binom_betabinom_tab_nv_nr/main.nf'
+include { CUSTOM_CREATE_GROUP_LEVEL_TAB_DFS } from '../../modules/bioskryb/custom_create_group_level_tab_dfs/main.nf'
+include { CUSTOM_SPLIT_BAM_CHR } from '../../modules/bioskryb/custom_split_bam_chr/main.nf'
+include { CUSTOM_BAM_GROUP_PILEUP_CHR } from '../../modules/bioskryb/custom_bam_group_pileup_chr/main.nf'
+include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIGAR } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_1_samplelevel_process_pileup_sample_cigar/main.nf'
+include { CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES } from '../../modules/bioskryb/custom_somatic_snpindel_filterrawtables/main.nf'
+include { SEQUOIA } from '../../modules/sequoia/main.nf'
+include { SUBSET_VCF_VARIANTS } from '../../modules/bioskryb/subset_vcf_variants/main.nf'
+include { POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE } from '../../modules/bioskryb/custom_postprocess_sequoia_drawvafheat_tree/main.nf'
 
 workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     take:
@@ -20,25 +23,33 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     ch_vcf
     reference
     chrs
-    num_lines_split_query_table
+    cutoff_mq_hq
+    cutoff_bq_hq
+    cutoff_bps_start
     cutoff_as
     cutoff_prop_clipped_reads
-    cutoff_num_hq_frag
-    filter_bp_pos
-    cutoff_prop_bp
+    cutoff_prop_bp_under
     cutoff_sd_indiv
     cutoff_mad_indiv
     cutoff_sd_both
     cutoff_mad_both
     cutoff_sd_extreme
     cutoff_mad_extreme
-    num_lines_get_list_pos_group
-    cutoff_depth_manual
+    cutoff_prop_cells_goodcov_group
+    cutoff_goodcov_depth
     cutoff_numreads_variant_manual
-    cutoff_prev_na_manual
-    cutoff_prev_var_manual
-    sequoia_cutoff_binomial
-    sequoia_cutoff_rho
+    ch_model_vcf
+    first_pass_binomial_cutoff
+    first_pass_betabinomial_cutoff
+    num_lines_read_pileup
+    second_pass_binomial_cutoff
+    second_pass_betabinomial_cutoff_rho_snp
+    second_pass_betabinomial_cutoff_rho_indel
+    aggregated_hq_min_mean_depth
+    aggregated_hq_max_mean_depth
+    aggregated_min_mean_depth
+    aggregated_max_mean_depth
+    gender
     publish_dir
     disable_publish
     enable_publish
@@ -49,142 +60,176 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         ch_vcf,
         reference,
         publish_dir,
+        ch_model_vcf,
         disable_publish
     )
-    
-    ch_query_table = PREPROCESS_VCF.out.query_table
+
+    ch_input_merge_processed_vcf = PREPROCESS_VCF.out.vcf
+    .map{ it -> [it[2],it[1]]}
+    .groupTuple(by:0)
+    .map{ it -> [it[0],it[1].flatten().collect()]}
+
+
+    MERGE_PROCESSED_VCF (
+
+        ch_input_merge_processed_vcf,
+        reference,
+        publish_dir,
+        disable_publish 
+
+    )
+
+    ch_group_tables = PREPROCESS_VCF.out.query_table
+    .map{ it -> [it[2],it[1]]}
+    .groupTuple(by: 0)
+    .map{ it -> [it[0],it[1].flatten().collect()]}
+
+    // ch_group_tables.view()
+
+    CUSTOM_GET_LIST_POS_GROUP (
+        ch_group_tables,
+        publish_dir,
+        disable_publish
+    )
 
     ch_chr = Channel.of( chrs ).flatMap()
 
-    ch_query_table_chr = ch_query_table
-        .combine( ch_chr )
+    ch_input_bam_group_pileup = ch_bam
+    .map{
+        it -> [it[2],it[0],it[1]]
+    }
+    .combine(CUSTOM_GET_LIST_POS_GROUP.out,by:0)
+    .combine(ch_chr)
 
-    ch_bam_chr = ch_bam
-        .combine( ch_chr )
-    
-    CUSTOM_SPLIT_QUERY_TABLE_CHR(
-        ch_query_table_chr,
-        num_lines_split_query_table,
-        publish_dir,
-        disable_publish
-    )
-    
-    CUSTOM_SPLIT_BAM_CHR(
-        ch_bam_chr,
-        publish_dir,
-        disable_publish
-    )
-    
-    ch_query_table = CUSTOM_SPLIT_QUERY_TABLE_CHR.out
-        .flatten()
-        .map { it -> [ it.BaseName.replaceFirst(/.*_sample_/, "").replaceFirst(/_chr_.*/,""), it.BaseName.replaceFirst(/.*_chr_/, "").replaceFirst(/_file_.*/,"") , it.BaseName.replaceFirst(/.*_file_/, "").replaceFirst(/\.txt/,"") , it ] }
+    CUSTOM_BAM_GROUP_PILEUP (
 
-    ch_bam_chr_ipile = CUSTOM_SPLIT_BAM_CHR.out.bam
-
-    ch_input_pileup = ch_query_table
-        .combine(ch_bam_chr_ipile, by: [0,1] )
-    
-    CUSTOM_BAM_PILEUP_FILTER(
-        ch_input_pileup,
+        ch_input_bam_group_pileup,
         reference,
         publish_dir,
         disable_publish
-    )
-    
-    ch_bam_pileup = CUSTOM_BAM_PILEUP_FILTER.out
-    
-    ch_input_rscript = ch_bam_pileup
-        .combine(CUSTOM_SPLIT_BAM_CHR.out.df, by: [0,1] )
 
-    CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_CELL_LEVEL_CREATE_TABLE(
-        ch_input_rscript,
+    )
+
+    ch_input_df_nr = CUSTOM_BAM_GROUP_PILEUP.out.df_nr
+    .map{it ->
+        [it[0],it[1],it[3]]
+    }
+    .groupTuple(by: [0,1])
+    .map{it ->
+        [it[0],it[1],it[2].flatten().collect()]
+    }
+
+    ch_input_create_tab_nvnr = MERGE_PROCESSED_VCF.out.df_nv
+    .combine(ch_input_df_nr,by:0)
+    .map{it ->
+        [it[0],it[2],it[1],it[3].flatten().collect()]
+    }
+
+    CREATE_TAB_NVNR (
+
+        ch_input_create_tab_nvnr,
         publish_dir,
         disable_publish
+
     )
-    
-    ch_concat_tables = CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_CELL_LEVEL_CREATE_TABLE.out
-        .groupTuple(by: [0,1])
-    
-    CUSTOM_RSCRIPT_SOMATICSNP_FILTER_2_CELL_LEVEL_CONCAT_FILTER_TABLE(
-        ch_concat_tables,
+
+    SEQUOIA_BINOM_BETABINOM_TAB_NV_NR(
+
+        CREATE_TAB_NVNR.out,
+        aggregated_min_mean_depth,
+        aggregated_max_mean_depth,
+        gender,
+        publish_dir,
+        disable_publish
+
+    )
+
+    ch_input_concat_filter_bb = SEQUOIA_BINOM_BETABINOM_TAB_NV_NR.out.df_filter
+    .map{ it->
+        [it[0],it[2]]
+    }
+    .groupTuple(by:[0])
+    .map{ it->
+        [it[0],it[1].flatten().collect()]
+    }
+
+    CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR (
+
+        ch_input_concat_filter_bb,
+        first_pass_binomial_cutoff,
+        first_pass_betabinomial_cutoff,
+        publish_dir,
+        disable_publish
+
+    )
+
+    ch_input_rscript_filter_1 = CUSTOM_BAM_GROUP_PILEUP.out.pileup
+    .combine(CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR.out.chosen_variants,by: 0)
+
+
+
+    CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIGAR (
+
+        ch_input_rscript_filter_1,
+        cutoff_mq_hq,
+        cutoff_bq_hq,
+        cutoff_bps_start,
+        num_lines_read_pileup,
+        publish_dir,
+        disable_publish
+
+    )
+
+    ch_input_filter_tables = CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIGAR.out
+    .groupTuple(by :[0,1])
+    .map{it ->
+        [it[0],it[1],it[2].flatten().collect()]
+    }
+    .combine(CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR.out.chosen_variants,by: 0)
+
+    CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES (
+        ch_input_filter_tables,
         cutoff_as,
         cutoff_prop_clipped_reads,
-        cutoff_num_hq_frag,
-        filter_bp_pos,
-        cutoff_prop_bp,
+        cutoff_prop_bp_under,
         cutoff_sd_indiv,
         cutoff_mad_indiv,
         cutoff_sd_both,
         cutoff_mad_both,
         cutoff_sd_extreme,
         cutoff_mad_extreme,
-        publish_dir,
-        enable_publish
-    )
-    
-    ch_group_level_samples_chr = CUSTOM_RSCRIPT_SOMATICSNP_FILTER_2_CELL_LEVEL_CONCAT_FILTER_TABLE.out.res_filter
-        .map{ it ->
-            [it[0],it[2]]
-        }
-        .groupTuple(by: 0)
-        .combine( ch_chr )
-
-    CUSTOM_GET_LIST_POS_GROUP(
-        ch_group_level_samples_chr,
-        num_lines_get_list_pos_group,
-        publish_dir,
-        disable_publish
-    )
-    
-    ch_bam_chr_shuf = ch_bam_chr
-        .map { it ->
-            [it[2],it[3],it[0],it[1]]
-        }
-    
-    ch_list_out = CUSTOM_GET_LIST_POS_GROUP.out
-        .flatten()
-        .map { it -> [ it.BaseName.replaceFirst(/.*_group_/, "").replaceFirst(/_chr_.*/,""), it.BaseName.replaceFirst(/.*_chr_/, "").replaceFirst(/_file_.*/,"") , it.BaseName.replaceFirst(/.*_file_/, "").replaceFirst(/\.txt/,"") , it ] }
-    
-    ch_input_bam_list_group = ch_bam_chr_shuf
-        .combine(ch_list_out,by: [0,1] )
-
-    CUSTOM_BAM_GROUP_PILEUP_CHR(
-        ch_input_bam_list_group,
-        reference,
-        publish_dir,
-        disable_publish
-    )
-
-    CUSTOM_RSCRIPT_SOMATICSNP_FILTER_3_GROUPLEVEL_PROCESS_PILEUP_SAMPLE(
-        CUSTOM_BAM_GROUP_PILEUP_CHR.out,
-        publish_dir,
-        enable_publish
-    )
-    
-    ch_group_input_create_tabs_sequoia = CUSTOM_RSCRIPT_SOMATICSNP_FILTER_3_GROUPLEVEL_PROCESS_PILEUP_SAMPLE.out
-        .groupTuple(by: [0,1])
-
-    CUSTOM_RSCRIPT_SOMATICSNP_FILTER_4_CREATE_TABNR_TABNV(
-        ch_group_input_create_tabs_sequoia,
-        cutoff_depth_manual,
+        cutoff_prop_cells_goodcov_group,
+        cutoff_goodcov_depth,
         cutoff_numreads_variant_manual,
-        cutoff_prev_na_manual,
-        cutoff_prev_var_manual,
         publish_dir,
         enable_publish
     )
-    
-    ch_input_sequoia = CUSTOM_RSCRIPT_SOMATICSNP_FILTER_4_CREATE_TABNR_TABNV.out.clean
-        .groupTuple(by:0)
-        .map{ it->
-            [it[0],it[1].flatten().collect()]
-        }
-    
-    SEQUOIA(
-        ch_input_sequoia,
+
+    ch_input_tabs_group_level = CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES.out.tabs
+    .map{ it->
+        [it[0],it[2],it[3]]
+    }
+    .groupTuple(by:0)
+    .map{ it ->
+        [it[0],it[1].flatten().collect(),it[2].flatten().collect()]
+    }
+
+    CUSTOM_CREATE_GROUP_LEVEL_TAB_DFS (
+
+        ch_input_tabs_group_level,
+        publish_dir,
+        enable_publish
+
+    )
+
+    SEQUOIA (
+        CUSTOM_CREATE_GROUP_LEVEL_TAB_DFS.out.tabs,
         reference,
-        sequoia_cutoff_binomial,
-        sequoia_cutoff_rho,
+        second_pass_binomial_cutoff,
+        second_pass_betabinomial_cutoff_rho_snp,
+        second_pass_betabinomial_cutoff_rho_indel,
+        aggregated_hq_min_mean_depth,
+        aggregated_hq_max_mean_depth,
         publish_dir,
         enable_publish
     )
@@ -199,6 +244,14 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         reference,
         publish_dir,
         enable_publish
+    )
+
+    POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE (
+
+        SEQUOIA.out.bundle_post_vaf_tree,
+        publish_dir,
+        enable_publish
+
     )
 
     emit:
