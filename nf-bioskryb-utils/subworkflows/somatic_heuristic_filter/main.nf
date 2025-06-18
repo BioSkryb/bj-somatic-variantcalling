@@ -16,6 +16,9 @@ include { CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES } from '../../modules/bioskryb
 include { SEQUOIA } from '../../modules/sequoia/main.nf'
 include { SUBSET_VCF_VARIANTS } from '../../modules/bioskryb/subset_vcf_variants/main.nf'
 include { POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE } from '../../modules/bioskryb/custom_postprocess_sequoia_drawvafheat_tree/main.nf'
+include { CUSTOM_VARIANT_FILTER_PROVENANCE } from '../../modules/bioskryb/custom_variant_filter_provenance/main.nf'
+
+
 
 workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     take:
@@ -29,6 +32,7 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     cutoff_as
     cutoff_prop_clipped_reads
     cutoff_prop_bp_under
+    cutoff_prop_bp_upper
     cutoff_sd_indiv
     cutoff_mad_indiv
     cutoff_sd_both
@@ -42,6 +46,7 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     first_pass_binomial_cutoff
     first_pass_betabinomial_cutoff
     num_lines_read_pileup
+    read_length
     second_pass_binomial_cutoff
     second_pass_betabinomial_cutoff_rho_snp
     second_pass_betabinomial_cutoff_rho_indel
@@ -50,6 +55,7 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     aggregated_min_mean_depth
     aggregated_max_mean_depth
     gender
+    disable_qc
     publish_dir
     disable_publish
     enable_publish
@@ -175,6 +181,7 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         cutoff_bq_hq,
         cutoff_bps_start,
         num_lines_read_pileup,
+        read_length,
         publish_dir,
         disable_publish
 
@@ -192,6 +199,7 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         cutoff_as,
         cutoff_prop_clipped_reads,
         cutoff_prop_bp_under,
+        cutoff_prop_bp_upper,
         cutoff_sd_indiv,
         cutoff_mad_indiv,
         cutoff_sd_both,
@@ -201,6 +209,7 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         cutoff_prop_cells_goodcov_group,
         cutoff_goodcov_depth,
         cutoff_numreads_variant_manual,
+        disable_qc,
         publish_dir,
         enable_publish
     )
@@ -246,12 +255,33 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         enable_publish
     )
 
-    POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE (
+    ch_all_df_gt = PREPROCESS_VCF.out.df_gt.map{it -> [it[1]]}
 
+    .collect()
+
+    POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE (
         SEQUOIA.out.bundle_post_vaf_tree,
+        ch_all_df_gt,
         publish_dir,
         enable_publish
+    )
 
+    ch_df_gt = PREPROCESS_VCF.out.df_gt.map{it -> [it[2],it[1]]}
+                                       .groupTuple(by:0)
+                                       .map{it -> [it[0],it[1].flatten().collect()]}
+
+    ch_qc_tables = CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES.out.df_pass.map{it -> [it[0],it[2]]}
+                                                                      .groupTuple(by:0)
+                                                                      .map{it -> [it[0],it[1].flatten().collect()]}
+
+    ch_input_variant_provenance = CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR.out.res_df.combine(ch_df_gt, by:0)
+                                                                                    .combine(ch_qc_tables, by:0)
+                                                                                    .combine(SEQUOIA.out.df_filter, by:0)
+
+    CUSTOM_VARIANT_FILTER_PROVENANCE (
+        ch_input_variant_provenance,
+        params.publish_dir,
+        params.enable_publish
     )
 
     emit:

@@ -222,6 +222,7 @@ workflow {
             params.cutoff_as,
             params.cutoff_prop_clipped_reads,
             params.cutoff_prop_bp_under,
+            params.cutoff_prop_bp_upper,
             params.cutoff_sd_indiv,
             params.cutoff_mad_indiv,
             params.cutoff_sd_both,
@@ -235,6 +236,7 @@ workflow {
             params.first_pass_binomial_cutoff,
             params.first_pass_betabinomial_cutoff,
             params.num_lines_read_pileup,
+            params.read_length,
             params.second_pass_binomial_cutoff,
             params.second_pass_betabinomial_cutoff_rho_snp,
             params.second_pass_betabinomial_cutoff_rho_indel,
@@ -243,6 +245,7 @@ workflow {
             params.aggregated_min_mean_depth,
             params.aggregated_max_mean_depth,
             params.gender,
+            params.disable_qc,
             params.publish_dir,
             params.disable_publish,
             params.enable_publish
