@@ -93,7 +93,7 @@ example-
 ```
 git clone https://github.com/BioSkryb/bj-somatic-variantcalling.git
 cd bj-somatic-variantcalling
-nextflow run main.nf --input_csv $PWD/tests/data/inputs/input2.csv --publish_dir results/bj-somatic-variantcalling --max_cpus 8 --max_memory 50.GB
+nextflow run main.nf --input_csv $PWD/tests/data/inputs/input3.csv --publish_dir results/bj-somatic-variantcalling --max_cpus 8 --max_memory 50.GB --variant_workflow_type somatic_heuristic_filter --chrs \[\'chr22\',\ \'chrX\',\ \'chrY\'\]
 ```
 **Input Options**
 
