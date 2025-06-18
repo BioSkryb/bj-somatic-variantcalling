@@ -1,32 +1,20 @@
 {
-    "pseudo_bulk_input": {
-        "content": [
-            "pseudobulk_input.csv:md5,0678b3a85e2df7cf08e0ff32dbca8d3b"
-        ],
-        "meta": {
-            "nf-test": "0.9.2",
-            "nextflow": "24.10.5"
-        },
-        "timestamp": "2025-01-16T14:41:54+0000"
-    },
     "selected_metrics_mqc": {
         "content": [
-            "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,c5c2828ff3aae16aa5793784961cd765"
+            "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,2674e96c18e8bfac2f59f26a6addf247"
         ],
-        "meta": {
-            "nf-test": "0.9.2",
-            "nextflow": "24.10.5"
-        },
-        "timestamp": "2025-03-17T14:50:43.241504704"
+        "timestamp": "2025-06-18T10:49:46+0000"
+    },
+    "sequoia": {
+        "content": [
+            "df_filtered_placed_variants_GROUP1.tsv:md5,7e55699a8752726711ce37880eb0e78f"
+        ],
+        "timestamp": "2025-06-18T10:49:46+0000"
     },
     "all_metrics_mqc": {
         "content": [
-            "nf-wgs-pipeline_all_metrics_mqc.txt:md5,908bd3018810cd2ff3422fd2e8a4df95"
+            "nf-wgs-pipeline_all_metrics_mqc.txt:md5,b1d4973239cf90dcd334cdbf1878d899"
         ],
-        "meta": {
-            "nf-test": "0.9.2",
-            "nextflow": "24.10.5"
-        },
-        "timestamp": "2025-03-17T14:50:43.227522033"
+        "timestamp": "2025-06-18T10:49:46+0000"
     }
 }

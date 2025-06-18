@@ -16,7 +16,7 @@ process PREPROCESS_VCF {
   
     output:
     tuple val(sample_name), path("${sample_name}_noref.vcf.gz"), path("${sample_name}_noref.vcf.gz.tbi"), emit: vcf
-    
+
     script:
     """
     # filter wildtypes, include variants with PASS,. and normalize
@@ -100,6 +100,8 @@ process CUSTOM_MUTATIONCATALOG_MERGER {
     output:
     path("merged_mutationalcatalog.tsv"), emit: merged_mutationalcatalog
     path("merged_mutationalcatalog.parquet"), emit: merged_mutationalcatalog_parquet
+    path("merged_mutationalcatalog_mqc.tsv"), emit: merged_mutationalcatalog_mqc
+    path("Mutational_Signature_Profile_mqc.png"), emit: sbs96_barplot
 
     script:
     """
@@ -200,6 +202,47 @@ process CUSTOM_MUTATIONCATALOG_MERGER {
     # Save the converted DataFrame to a new Parquet file
     pq.write_table(table, 'merged_mutationalcatalog.parquet')
 
+    # Filter for SBS96 type and save to a text file
+    sbs96_df = df_normalized[df_normalized['Pattern'] == 'SBS96']
+    sbs96_df = sbs96_df[['MutationType', 'SampleName', 'Pattern', 'Count', 'Pattern_Total', 'Normalized_Count', 'Percentage', 'Pattern_Total_Count']]
+    sbs96_df.to_csv('merged_mutationalcatalog_mqc.tsv', sep='\t', index=False)
+
+    # Add sbs96 barplot
+    import matplotlib.pyplot as plt
+
+    # Define a color map for the mutation types
+    color_map = {
+        'C>A': 'skyblue',
+        'C>G': 'black',
+        'C>T': 'red',
+        'T>A': 'grey',
+        'T>C': 'lightgreen',
+        'T>G': 'lightcoral'
+    }
+
+    # Filter the DataFrame for SBS96 pattern
+    barplot_data = sbs96_df[sbs96_df['Pattern'] == 'SBS96']
+
+    # Extract the base substitution type from the MutationType
+    barplot_data['BaseSubstitution'] = barplot_data['MutationType'].str[2:5]
+
+    # Map the colors to the base substitution types
+    barplot_data['Color'] = barplot_data['BaseSubstitution'].map(color_map)
+
+    # Sort the data by the base substitution type within the MutationType
+    barplot_data = barplot_data.sort_values(by='BaseSubstitution')
+
+    # Plot the barplot
+    plt.figure(figsize=(15, 6))
+    plt.bar(barplot_data['MutationType'], barplot_data['Percentage'], color=barplot_data['Color'])
+    plt.xlabel('Mutation Type')
+    plt.ylabel('Percentage of Single Base Substitutions')
+    plt.title('SBS96 Mutation Type Percentages')
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+
+    # Save the plot
+    plt.savefig('Mutational_Signature_Profile_mqc.png')
     """
 }
 
@@ -212,9 +255,13 @@ process SIGPROFILE_HEATMAP {
     path(input_data)
     val( publish_dir )
     val( enable_publish )
+    val( enough_samples ) // boolean to check if the number of samples is 3 or more
 
     output:
     path("heatmap_sigprofiler.png")
+
+    when:
+    enough_samples
 
     script:
     """
@@ -259,12 +306,26 @@ workflow SIGPROFILERGENERATEMATRIX_WF {
                                                     ch_enable_publish
                                                 )
 
-        SIGPROFILE_HEATMAP (    CUSTOM_MUTATIONCATALOG_MERGER.out.merged_mutationalcatalog,
-                                ch_publish_dir,
-                                ch_enable_publish
-                            )
+        // Check if the number of samples is 3 or more
+        ch_vcf.count().map { count -> count >= 3 }.set { enough_samples }
+
+        SIGPROFILE_HEATMAP(
+            CUSTOM_MUTATIONCATALOG_MERGER.out.merged_mutationalcatalog,
+            ch_publish_dir,
+            ch_enable_publish,
+            enough_samples
+        )
+
+        enough_samples.view { enough ->
+            if (!enough) {
+                log.info "SIGPROFILE_HEATMAP process will not run as there are less than 3 samples."
+            }
+        }
+        
     emit:
         merged_mutationalcatalog = CUSTOM_MUTATIONCATALOG_MERGER.out.merged_mutationalcatalog
+        merged_mutationalcatalog_mqc = CUSTOM_MUTATIONCATALOG_MERGER.out.merged_mutationalcatalog_mqc
+        sbs96_barplot = CUSTOM_MUTATIONCATALOG_MERGER.out.sbs96_barplot
 }
 
 

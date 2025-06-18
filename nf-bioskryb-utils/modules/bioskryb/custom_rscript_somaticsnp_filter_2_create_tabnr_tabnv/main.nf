@@ -4,9 +4,9 @@ params.timestamp = ""
 process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_4_CREATE_TABNR_TABNV {
     tag "${group}_${chr}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled:"$enable_publish"
+    
 
-
-
+    
     input:
     tuple val(group), val(chr), path(df_files)
     val(cutoff_depth_manual)
@@ -15,7 +15,7 @@ process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_4_CREATE_TABNR_TABNV {
     val(cutoff_prev_var_manual)
     val( publish_dir )
     val( enable_publish )
-
+  
     output:
     tuple val(group), path("Tab_NR_somatic_snps_${group}_${chr}.tsv"), path("Tab_NV_somatic_snps_${group}_${chr}.tsv"), emit:raw
     tuple val(group), path("Tab_*filtered_${group}_${chr}.tsv"), emit:clean
@@ -39,5 +39,5 @@ process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_4_CREATE_TABNR_TABNV {
     mv Tab_NV_somatic_snps_filtered.tsv Tab_NV_somatic_snps_filtered_${group}_${chr}.tsv
         
     """
-
+    
 }
