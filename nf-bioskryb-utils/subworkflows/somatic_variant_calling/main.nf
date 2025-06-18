@@ -1,9 +1,9 @@
 nextflow.enable.dsl=2
 
 // IMPORT MODULES
-include { SENTIEON_DRIVER_TNSEQ } from '../../modules/sentieon/driver/tnseq/main.nf' addParams( timestamp: params.timestamp )
-include { PSEUDO_BULK_WF } from '../../subworkflows/pseudobulk_sc_wf/main.nf' addParams( timestamp: params.timestamp )
-include { SENTIEON_DRIVER_TNSCOPE; SENTIEON_DRIVER_TNSCOPE_PANEL_OF_NORMAL; SENTIEON_DRIVER_TNSCOPE_TUMOR_PANEL_OF_NORMAL; GENERATE_PANEL_OF_NORMAL } from '../../modules/sentieon/driver/tnscope/main.nf' addParams( timestamp: params.timestamp )
+include { SENTIEON_DRIVER_TNSEQ } from '../../modules/sentieon/driver/tnseq/main.nf'
+include { PSEUDO_BULK_WF } from '../../subworkflows/pseudobulk_sc_wf/main.nf'
+include { SENTIEON_DRIVER_TNSCOPE; SENTIEON_DRIVER_TNSCOPE_PANEL_OF_NORMAL; SENTIEON_DRIVER_TNSCOPE_TUMOR_PANEL_OF_NORMAL; GENERATE_PANEL_OF_NORMAL } from '../../modules/sentieon/driver/tnscope/main.nf'
 
 params.reference                    = params.genomes [ params.genome ] [ 'reference' ]
 params.dbsnp                        = params.genomes [ params.genome ] [ 'dbsnp' ]

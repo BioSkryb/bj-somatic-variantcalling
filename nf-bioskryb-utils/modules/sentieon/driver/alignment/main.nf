@@ -51,7 +51,7 @@ process SENTIEON_ALIGNMENT {
         echo \$SENTIEON_LICENSE
     fi
     
-    export bwt_max_mem=${task.memory.toGiga()}G
+    export bwt_max_mem=\$([ ${task.memory.toGiga()} -gt 30 ] && echo "30G" || echo "${task.memory.toGiga()}G")
  
     
     sentieon bwa mem -M -Y -K 2500000000 -R "@RG\\tID:${sample_name}\\tSM:${sample_name}\\tPL:${platform}" -t ${task.cpus} '${fasta_ref}/genome.fa' '${r1}' '${r2}' | sentieon util sort -r '${fasta_ref}/genome.fa' -o '${sample_name}_sorted.bam' -t $task.cpus --sam2bam -i -

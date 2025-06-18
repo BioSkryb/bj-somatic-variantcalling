@@ -32,13 +32,13 @@ process CUSTOM_DATA_PROCESSING {
     
 
     parse_metrics_files.py \
-       --wgs_metrics_filename ${sample_name}.wgsmetricsalgo.sentieonmetrics.txt \
-       --hs_metrics_filename ${sample_name}.hsmetricalgo.sentieonmetrics.txt \
+       --wgs_metrics_filename ${sample_name}.dedup.wgsmetricsalgo.sentieonmetrics.txt \
+       --hs_metrics_filename ${sample_name}.dedup.hsmetricalgo.sentieonmetrics.txt \
        --dedup_metrics_filename ${sample_name}.dedup_sentieonmetrics.txt \
        --summary_metrics_filename ${sample_name}.dedup.alignmentstat_sentieonmetrics.txt \
        --chrom_proportions_filename ${sample_name}_chromosome_read_proportions.tsv \
-       --gc_bias_summary_filename ${sample_name}.gcbias_summary.sentieonmetrics.txt \
-       --insert_size_metrics_filename ${sample_name}.insertsizemetricalgo.sentieonmetrics.txt \
+       --gc_bias_summary_filename ${sample_name}.dedup.gcbias_summary.sentieonmetrics.txt \
+       --insert_size_metrics_filename ${sample_name}.dedup.insertsizemetricalgo.sentieonmetrics.txt \
        --sample_name ${sample_name} \
        --mode ${mode}
 
@@ -68,25 +68,4 @@ workflow CUSTOM_DATA_PROCESSING_WF {
         version = CUSTOM_DATA_PROCESSING.out.version
         
     
-}
-
-workflow{
-    
-    ch_bam_raw = Channel.fromFilePairs(params.bam_dir + "/*{.bam,bam.bai}", size: -1)
-    ch_bam_raw
-              .map{ it -> it.flatten().collect() }
-              .set{ ch_bam }
-              
-    combine_outputs_f = ch_combine (
-                                    ch_bam
-                                        .join( ch_metrics_tuple ),
-                                by: 0
-                                )
-                            
-    CUSTOM_DATA_PROCESSING_WF(
-                            ch_combined_input,
-                            params.mode,
-                            params.publish_dir,
-                            params.enable_publish
-                           )
 }

@@ -8,11 +8,14 @@ nextflow_pipeline {
         when {
             params {
                 publish_dir = "${outputDir}/results"
-                input_csv   = "$baseDir/tests/data/inputs/input2.csv"
+                input_csv   = "$baseDir/tests/data/inputs/input3.csv"
                 timestamp = "test"
-                variant_workflow_type = "pseudobulk"
-                is_bam = "true"
+                variant_workflow_type = "somatic_heuristic_filter"
+                chrs   = "['chr22', 'chrX', 'chrY']"
+                is_bam = false
                 architecture = "x86"
+                max_memory = "28.GB"
+                max_cpus = 8
             }
         }
 
@@ -31,14 +34,11 @@ nextflow_pipeline {
                 {assert snapshot (path("${outputDir}/results_test/secondary_analyses/metrics/nf-wgs-pipeline_selected_metrics_mqc.txt")).match("selected_metrics_mqc")},
 
                 // Verify existence of the bam file
-                {assert new File("${outputDir}/results_test/secondary_analyses/alignment/GROUP1.bam.bai").exists()},
+                {assert new File("${outputDir}/results_test/secondary_analyses/alignment/somatic_chr22_testsample1_S1_L001.bam.bai").exists()},
 
-                // Check for a match in the pseudobulk csv file
-                {assert snapshot (path("${outputDir}/results_test/pseudobulk/pseudobulk_input.csv")).match("pseudo_bulk_input")},
-
-                // Verify existence of the tnscope out file
-                {assert new File("${outputDir}/results_test/variant_calls_tnscope/chr22_testsample2_S1_L001_GROUP1/chr22_testsample2_S1_L001_tnscope.vcf.gz").exists()}
-
+                // Check for a match in the selected metrics MQC text file
+                {assert snapshot (path("${outputDir}/results_test/SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter_SEQUOIA/df_filtered_placed_variants_GROUP1.tsv")).match("sequoia")}
+                
             )
         }
 

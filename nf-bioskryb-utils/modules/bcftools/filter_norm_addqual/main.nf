@@ -8,38 +8,41 @@ process PREPROCESS_VCF {
     input:
     tuple val(sample_name), path(input_vcf), val(group)
     path(reference)
+    val(model_vcf)
     val(publish_dir)
     val(enable_publish)
 
   
     output:
-    tuple val(sample_name), path("${sample_name}_noref_norm_qualinfo.vcf.gz*"), val(group), emit: vcf
+    tuple val(sample_name), path("${sample_name}_noref_norm.vcf.gz*"), val(group), emit: vcf
     tuple val(sample_name), path("df_query_${sample_name}.tsv"), val(group), emit: query_table
+    tuple val(sample_name), path("df_gt_${sample_name}.tsv"), val(group), emit: df_gt
 
     
     script:
     """
-    # filter wildtypes and normalize
-    bcftools view --threads ${task.cpus} -i 'GT!="0/0"' ${input_vcf[0]} | bcftools norm --threads ${task.cpus} -m -any --check-ref s -f ${reference}/genome.fa  | bcftools view --threads ${task.cpus} -i 'GT!="0/0"' | bcftools +fill-tags | bcftools view -Oz -o _temp_${sample_name}.vcf.gz
 
-    bcftools index -t _temp_${sample_name}.vcf.gz
+    if [ "${model_vcf}" = "deepvariant" ]; then
 
-    # add quality information
-    #bcftools query -f'%CHROM\\t%POS\\t%QUAL\\n' _temp_${sample_name}.vcf.gz | bgzip -c > ${sample_name}_qual.txt.gz
-    #tabix -s1 -b2 -e2 ${sample_name}_qual.txt.gz
+        bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' ${input_vcf[0]} | bcftools norm --threads ${task.cpus} -m -any --check-ref s -f ${reference}/genome.fa | bcftools norm --threads ${task.cpus} -d exact | bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' -Oz -o temp.vcf.gz 
+    else
 
-    #echo '##FORMAT=<ID=QUAL,Number=1,Type=Float,Description="Per-sample QUAL">' > hdr.txt
-    #bcftools annotate --threads ${task.cpus} -a ${sample_name}_qual.txt.gz -c CHROM,POS,FORMAT/QUAL -h hdr.txt -Oz -o ${sample_name}_noref_norm_qualinfo.vcf.gz _temp_${sample_name}.vcf.gz
+        bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' ${input_vcf[0]} | bcftools norm --threads ${task.cpus} -m -any --check-ref s -f ${reference}/genome.fa  | bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' -Oz -o temp.vcf.gz
 
-    #bcftools index -t ${sample_name}_noref_norm_qualinfo.vcf.gz
+    fi
 
-    mv _temp_${sample_name}.vcf.gz ${sample_name}_noref_norm_qualinfo.vcf.gz
-    mv _temp_${sample_name}.vcf.gz.tbi ${sample_name}_noref_norm_qualinfo.vcf.gz.tbi
-    
-    #Extract only snps and create a table
-    bcftools view --types snps  ${sample_name}_noref_norm_qualinfo.vcf.gz  | bcftools query --print-header -f '%CHROM\\t%POS\\t%REF\\t%ALT\\n' | tail -n+2 > df_query_${sample_name}.tsv
+    bcftools index --threads ${task.cpus} -t temp.vcf.gz
 
+    echo -e "${sample_name}" > noms.txt;
 
+    bcftools reheader --threads ${task.cpus} -s noms.txt temp.vcf.gz | bcftools view --threads ${task.cpus} -Oz -o ${sample_name}_noref_norm.vcf.gz
 
+    bcftools index --threads ${task.cpus} -t ${sample_name}_noref_norm.vcf.gz
+
+    bcftools query --print-header -f '%CHROM\\t%POS\\t%REF\\t%ALT[\\t%AD\\t%DP\\t%GT]\\n' ${sample_name}_noref_norm.vcf.gz | tail -n+2 >> df_nv_nr.tsv
+
+    cat df_nv_nr.tsv  | awk -v OFS="\\t" '{gsub(".*,","",\$5);print \$1"_"\$2"_"\$3"_"\$4,\$5,\$6}'  > df_query_${sample_name}.tsv
+
+    cat df_nv_nr.tsv  | awk -v OFS="\\t" '{print \$1"_"\$2"_"\$3"_"\$4,\$7}' > df_gt_${sample_name}.tsv
     """
 }

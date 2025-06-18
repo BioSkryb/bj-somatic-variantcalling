@@ -1,20 +1,20 @@
 {
-    "pseudo_bulk_input": {
-        "content": [
-            "pseudobulk_input.csv:md5,0678b3a85e2df7cf08e0ff32dbca8d3b"
-        ],
-        "timestamp": "2024-10-24T17:09:33+0000"
-    },
     "selected_metrics_mqc": {
         "content": [
-            "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,bb78d1f5489b8bf1078c830ff01c5225"
+            "nf-wgs-pipeline_selected_metrics_mqc.txt:md5,2674e96c18e8bfac2f59f26a6addf247"
         ],
-        "timestamp": "2024-10-24T17:09:33+0000"
+        "timestamp": "2025-06-18T10:49:46+0000"
+    },
+    "sequoia": {
+        "content": [
+            "df_filtered_placed_variants_GROUP1.tsv:md5,7e55699a8752726711ce37880eb0e78f"
+        ],
+        "timestamp": "2025-06-18T10:49:46+0000"
     },
     "all_metrics_mqc": {
         "content": [
-            "nf-wgs-pipeline_all_metrics_mqc.txt:md5,e75f1e227f1cc6699a6e23e4acb41b78"
+            "nf-wgs-pipeline_all_metrics_mqc.txt:md5,b1d4973239cf90dcd334cdbf1878d899"
         ],
-        "timestamp": "2024-10-24T17:09:33+0000"
+        "timestamp": "2025-06-18T10:49:46+0000"
     }
 }
