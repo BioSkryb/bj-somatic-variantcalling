@@ -245,6 +245,8 @@ workflow {
             params.aggregated_min_mean_depth,
             params.aggregated_max_mean_depth,
             params.gender,
+            params.cutoff_num_hq_fragments_forward,
++           params.cutoff_num_hq_fragments_reverse,
             params.disable_qc,
             params.publish_dir,
             params.disable_publish,

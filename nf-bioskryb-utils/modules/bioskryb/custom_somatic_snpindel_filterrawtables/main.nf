@@ -20,6 +20,8 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     val(threshold_prop_cells_goodcov)
     val(threshold_good_coverage)
     val(threshold_good_variant_support)
+    val(threshold_num_hq_fragments_forward)
+    val(threshold_num_hq_fragments_reverse)
     val(disable_qc)
     val(publish_dir)
     val(enable_publish)
@@ -48,7 +50,7 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     echo -e "Filtering ... ";
 
-    Rscript /usr/local/bin/rscript_2.create_tabnr_tabnv.R ${threshold_as} ${threshold_clipped} ${threshold_prop_bp_under} ${threshold_prop_bp_upper} ${threshold_sd_indiv} ${threshold_mad_indiv} ${threshold_sd_both} ${threshold_mad_both} ${threshold_sd_extreme} ${threshold_mad_extreme} ${threshold_good_coverage} ${threshold_prop_cells_goodcov} ${threshold_good_variant_support} ${disable_qc}
+    Rscript /usr/local/bin/rscript_2.create_tabnr_tabnv.R ${threshold_as} ${threshold_clipped} ${threshold_prop_bp_under} ${threshold_prop_bp_upper} ${threshold_sd_indiv} ${threshold_mad_indiv} ${threshold_sd_both} ${threshold_mad_both} ${threshold_sd_extreme} ${threshold_mad_extreme} ${threshold_good_coverage} ${threshold_prop_cells_goodcov} ${threshold_good_variant_support} ${threshold_num_hq_fragments_forward} ${threshold_num_hq_fragments_reverse} ${disable_qc}
 
     echo -e "Subsetting matrices ... ";
 
@@ -79,7 +81,9 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     mv df_passed_propclipped.tsv df_passed_propclipped_${group}_${chr}.tsv
 
-    mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv 
+    mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv
+
+    mv df_passed_NUMFRAGMENTS.tsv df_passed_NUMFRAGMENTS_${group}_${chr}.tsv 
 
     cat Mat_NV_${group}_${chr}.tsv | tail -n +2 | cut -f1 > df_passed_DEPTH_${group}_${chr}.tsv
 
