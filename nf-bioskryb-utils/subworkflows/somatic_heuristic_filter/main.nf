@@ -55,6 +55,8 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
     aggregated_min_mean_depth
     aggregated_max_mean_depth
     gender
+    cutoff_num_hq_fragments_forward
+    cutoff_num_hq_fragments_reverse
     disable_qc
     publish_dir
     disable_publish
@@ -209,6 +211,8 @@ workflow SOMATIC_VARIANT_WORKFLOW_Heuristic_Filter {
         cutoff_prop_cells_goodcov_group,
         cutoff_goodcov_depth,
         cutoff_numreads_variant_manual,
+        cutoff_num_hq_fragments_forward,
+        cutoff_num_hq_fragments_reverse,
         disable_qc,
         publish_dir,
         enable_publish
