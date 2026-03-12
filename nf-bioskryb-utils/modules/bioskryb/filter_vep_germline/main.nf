@@ -3,19 +3,21 @@ params.timestamp = ""
 
 // Filter VEP-annotated VCF: optionally exclude variants only in dbSNP (Existing_variation);
 // always apply AF/MAX_AF <= max_af. When filter_by_existing_variation is true: keep only if no IDs, or ≥1 non-dbSNP ID.
+// Input VCF is sorted and indexed internally before filtering.
 // Output: CHROM_POS_REF_ALT (one per line) to chosen_variants_postgermlinefilter_${group}.txt
 process FILTER_VEP_GERMLINE {
     tag "${group}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled: "$enable_publish"
 
     input:
-    tuple val(group), path(vep_vcf), path(vep_vcf_tbi)
+    tuple val(group), path(vep_vcf)
     val(max_af)
     val(filter_by_existing_variation)
     val(publish_dir)
     val(enable_publish)
 
     output:
+    tuple val(group), path("vep_sorted_${group}.vcf.gz"), path("vep_sorted_${group}.vcf.gz.tbi"), emit: sorted_vep_vcf
     tuple val(group), path("chosen_variants_postgermlinefilter_${group}.txt"), emit: chosen_variants
 
     script:
@@ -24,9 +26,12 @@ process FILTER_VEP_GERMLINE {
     // bcftools -i/-e does not see CSQ-extracted AF when using -f (format output), so do AF + optional Existing_variation in awk
     // -s worst: one row per variant (worst consequence). Cols: CHROM,POS,REF,ALT,Existing_variation,AF,MAX_AF
     """
+    bcftools sort -Oz -o vep_sorted_${group}.vcf.gz ${vcf}
+    bcftools index -t vep_sorted_${group}.vcf.gz
+
     echo -e "Filtering VEP VCF: filter_by_existing_variation=${filter_by_existing_variation}; exclude AF, MAX_AF > ${max_af} ..."
 
-    bcftools +split-vep ${vcf} -f '%CHROM\\t%POS\\t%REF\\t%ALT\\t%Existing_variation\\t%AF\\t%MAX_AF\\n' -d -s worst | \\
+    bcftools +split-vep vep_sorted_${group}.vcf.gz -f '%CHROM\\t%POS\\t%REF\\t%ALT\\t%Existing_variation\\t%AF\\t%MAX_AF\\n' -d -s worst | \\
     awk -v max_af=${max_af} -v filter_ev=${filter_ev} -v OFS="_" 'BEGIN{FS="\\t"}
       NF>=7 {
         keep_ev=1;
