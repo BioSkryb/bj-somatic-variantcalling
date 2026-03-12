@@ -116,7 +116,8 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
     .groupTuple(by: 0)
     .map{ it -> [it[0],it[1].flatten().collect()]}
 
-    ch_chr = Channel.of( params.chrs ).flatMap()
+    def chrs_list = (params.chrs instanceof List) ? params.chrs : params.chrs.replaceAll(/[\[\]']/, '').split(',').collect { it.trim() }
+    ch_chr = Channel.of( chrs_list ).flatMap()
 
     // (group, sample_name, path(bam)), (group, path(list_pos)), (chr) -> (group, sample_name, path(bam), path(list_pos), chr)
     ch_input_bam_group_pileup = inputs.ch_bam
@@ -213,7 +214,7 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
     )
 
     ch_subset_by_chr = SUBSET_MERGED_VCF_CHOSEN_VARIANTS.out.subset_vcf
-        .combine(Channel.of(params.chrs).flatMap())
+        .combine(Channel.of(chrs_list).flatMap())
 
     SPLIT_SUBSET_VCF_BY_CHR (
         ch_subset_by_chr,
@@ -221,7 +222,7 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         params.enable_publish
     )
 
-    if (params.vep_cache_dir) {
+    if (params.vep_cache_dir instanceof String && params.vep_cache_dir != '') {
         // Pass cache as path so Nextflow stages it from S3 into the container (required for Docker on EC2).
         // Must be the cache root (directory containing the species folder, e.g. .../VEP/).
         ch_vep_cache = file(params.vep_cache_dir, type: 'dir')
