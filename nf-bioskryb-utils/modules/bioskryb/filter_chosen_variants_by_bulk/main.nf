@@ -32,15 +32,20 @@ process FILTER_CHOSEN_VARIANTS_BY_BULK {
 
     output:
     tuple val(group), path("chosen_variants_filtered_bulk_${group}.txt"), emit: chosen_variants
+    tuple val(group), path("bulk_filter_provenance_${group}.tsv"), emit: bulk_filter_provenance
 
     script:
     // When bulk file is empty, pass through all chosen variants. Otherwise awk: skip header in bulk; exclude chosen variants that appear in bulk.
     // (When first file is empty, awk's NR==FNR is true for every line of the second file, so all would be wrongly excluded.)
     """
+    echo -e "Variant\\tRemainingAfterBulk" > bulk_filter_provenance_${group}.tsv
+
     if [ ! -s "${bulk_variants}" ]; then
       cp ${chosen_variants} chosen_variants_filtered_bulk_${group}.txt
+      awk '{print \$0"\\tPass"}' ${chosen_variants} >> bulk_filter_provenance_${group}.tsv
     else
       awk 'NR==FNR { if (FNR==1 && (\$0 ~ /^#/ || \$0 ~ /^CHROM/)) next; bulk[\$0]=1; next } !(\$0 in bulk)' ${bulk_variants} ${chosen_variants} > chosen_variants_filtered_bulk_${group}.txt
+      awk 'NR==FNR { if (FNR==1 && (\$0 ~ /^#/ || \$0 ~ /^CHROM/)) next; bulk[\$0]=1; next } { print \$0"\\t"((\$0 in bulk) ? "Fail" : "Pass") }' ${bulk_variants} ${chosen_variants} >> bulk_filter_provenance_${group}.tsv
     fi
     """
 }

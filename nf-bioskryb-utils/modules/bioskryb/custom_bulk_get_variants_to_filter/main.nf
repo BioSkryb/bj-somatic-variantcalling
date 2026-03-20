@@ -4,7 +4,7 @@ params.timestamp = ""
 process BULK_GET_VARIANTS_TO_FILTER {
     tag "BULK_GET_VARIANTS_TO_FILTER"
     publishDir "${publish_dir}_${params.timestamp}/BULK_GET_VARIANTS_TO_FILTER/", enabled: "$enable_publish"
-
+    
     input:
     path(input_vcf)
     path(reference)
@@ -12,7 +12,7 @@ process BULK_GET_VARIANTS_TO_FILTER {
     val(publish_dir)
     val(enable_publish)
 
-
+  
     output:
     path("variants_present_bulk.txt")
 
@@ -21,7 +21,7 @@ process BULK_GET_VARIANTS_TO_FILTER {
 
     if [ "${model_vcf}" = "deepvariant" ]; then
 
-        bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' ${input_vcf} | bcftools norm --threads ${task.cpus} -m -any --check-ref s -f ${reference}/genome.fa | bcftools norm --threads ${task.cpus} -d exact | bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' -Oz -o temp.vcf.gz
+        bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' ${input_vcf} | bcftools norm --threads ${task.cpus} -m -any --check-ref s -f ${reference}/genome.fa | bcftools norm --threads ${task.cpus} -d exact | bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' -Oz -o temp.vcf.gz 
     else
 
         bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' ${input_vcf} | bcftools norm --threads ${task.cpus} -m -any --check-ref s -f ${reference}/genome.fa  | bcftools view --threads ${task.cpus} -i 'GT[*]="alt"' -Oz -o temp.vcf.gz

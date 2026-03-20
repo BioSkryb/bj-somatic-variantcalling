@@ -31,7 +31,14 @@ process CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR {
     mv df_verdict.txt res_${group}_binomial_betabinomial.tsv
 
     mv chosen_variants.txt chosen_variants_${group}.txt
-    
+
+    awk -v OFS="\\t" 'NR==FNR { chosen[\$0]=1; next }
+      FNR==1 { print \$0, "BinomialBetabinomialFilter"; next }
+      { print \$0, ((\$1 in chosen) ? "Pass" : "Fail") }
+    ' chosen_variants_${group}.txt res_${group}_binomial_betabinomial.tsv > res_annotated.tsv
+
+    mv res_annotated.tsv res_${group}_binomial_betabinomial.tsv
+
     """
     
 }

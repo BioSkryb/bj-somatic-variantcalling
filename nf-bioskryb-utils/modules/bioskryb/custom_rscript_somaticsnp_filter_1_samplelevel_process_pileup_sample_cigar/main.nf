@@ -32,11 +32,13 @@ process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIG
 
     echo -e "Launching QC script ...";
 
-    Rscript /usr/local/bin/rscript_1.samplelevel_process_pileup_sample_cigars.R pileup_subset.tsv ${sample_name} ${threshold_mq} ${threshold_bq} ${threshold_bp} ${num_lines_read_pileup} ${read_length}
-
-    mv res.tsv res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv
-    
-
+    if [ -s "pileup_subset.tsv" ]; then
+        Rscript /usr/local/bin/rscript_1.samplelevel_process_pileup_sample_cigars.R pileup_subset.tsv ${sample_name} ${threshold_mq} ${threshold_bq} ${threshold_bp} ${num_lines_read_pileup} ${read_length}
+        mv res.tsv res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv
+    else
+        echo -e "Pileup subset file is empty, skipping QC script ...";
+        touch res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv;
+    fi
     
     """
     
