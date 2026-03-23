@@ -36,6 +36,8 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     
     """
 
+
+
     echo -e "Concatenating tables ...";
 
     find . -name "res_grouplevel_pileup*" | sort -V > list_files.txt
@@ -81,13 +83,51 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     mv df_passed_propclipped.tsv df_passed_propclipped_${group}_${chr}.tsv
 
-    mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv
+    mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv 
 
     mv df_passed_NUMFRAGMENTS.tsv df_passed_NUMFRAGMENTS_${group}_${chr}.tsv 
 
     cat Mat_NV_${group}_${chr}.tsv | tail -n +2 | cut -f1 > df_passed_DEPTH_${group}_${chr}.tsv
 
     mv res_end.tsv res_pileup_all_group_${group}_${chr}.tsv
+
+    echo -e "Annotating pileup table with per-filter status ...";
+
+    awk -v OFS="\\t" '
+      FILENAME ~ /df_passed_AS/                  && NF>=3 { as_pass[\$2 SUBSEP \$3]=1;      next }
+      FILENAME ~ /df_passed_propclipped/         && NF>=3 { clip_pass[\$2 SUBSEP \$3]=1;    next }
+      FILENAME ~ /df_passed_BPPOS/               && NF>=3 { bppos_pass[\$2 SUBSEP \$3]=1;   next }
+      FILENAME ~ /df_passed_NUMFRAGMENTS/        && NF>=3 { numfrag_pass[\$2 SUBSEP \$3]=1; next }
+      FILENAME ~ /df_passed_DEPTH/               && NF>=1 { depth_pass[\$1]=1;             next }
+      FILENAME ~ /df_passed_PRESENTVCF_NOTINBAM/ && NF>=1 { vcf_notbam[\$1]=1;             next }
+      FILENAME ~ /df_passed_PRESENTBAM_NOTINVCF/ && NF>=1 { bam_notvcf[\$1]=1;             next }
+      FNR==1 {
+        print \$0, "AS_Filter", "PropClipped_Filter", "BPPos_Filter", "NumFragments_Filter",
+                   "Depth_Filter", "PresentVCF_NotInBAM", "PresentBAM_NotInVCF", "Verdict"
+        next
+      }
+      {
+        key = \$1 SUBSEP \$2; vid = \$2
+        print \$0,
+          ((key in as_pass)      ? "Pass" : "Fail"),
+          ((key in clip_pass)    ? "Pass" : "Fail"),
+          ((key in bppos_pass)   ? "Pass" : "Fail"),
+          ((key in numfrag_pass) ? "Pass" : "Fail"),
+          ((vid in depth_pass)   ? "Pass" : "Fail"),
+          ((vid in vcf_notbam)   ? "Yes"  : "No"),
+          ((vid in bam_notvcf)   ? "Yes"  : "No"),
+          ((vid in depth_pass)   ? "Pass" : "Fail")
+      }
+    ' df_passed_AS_${group}_${chr}.tsv \
+      df_passed_propclipped_${group}_${chr}.tsv \
+      df_passed_BPPOS_${group}_${chr}.tsv \
+      df_passed_NUMFRAGMENTS_${group}_${chr}.tsv \
+      df_passed_DEPTH_${group}_${chr}.tsv \
+      df_passed_PRESENTVCF_NOTINBAM_${group}_${chr}.tsv \
+      df_passed_PRESENTBAM_NOTINVCF_${group}_${chr}.tsv \
+      res_pileup_all_group_${group}_${chr}.tsv > res_pileup_annotated.tsv
+
+    mv res_pileup_annotated.tsv res_pileup_all_group_${group}_${chr}.tsv
 
     """
 }

@@ -14,7 +14,7 @@ process SUBSET_VCF_VARIANTS {
 
   
     output:
-    tuple val(sample_name), path("*_somatic_filtered_variants.vcf.gz*"), emit: vcf
+    path("*_somatic_filtered_variants.vcf.gz*"), emit: vcf
 
     script:
     """
