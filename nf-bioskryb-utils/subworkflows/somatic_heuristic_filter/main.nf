@@ -49,6 +49,16 @@ include { GET_VARIANTS_FROM_MERGED_VCF                                          
 include { GET_LIST_POS_FROM_CHOSEN_VARIANTS                                      } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
 include { FILTER_DF_NV_BY_CHOSEN_VARIANTS                                        } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
 include { COMPILE_MASTER_REPORT                                                  } from '../../modules/bioskryb/compile_master_report/main.nf'                                                            addParams( timestamp: params.timestamp )
+include { IDENTIFY_GERMLINE_FROM_STATS                                           } from '../../modules/bioskryb/identify_germline_from_stats/main.nf'                                                          addParams( timestamp: params.timestamp )
+include { EXTRACT_GERMLINE_PREVALENCE_TABLE                                      } from '../../modules/bioskryb/extract_germline_prevalence_table/main.nf'                                                     addParams( timestamp: params.timestamp )
+include { PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS                                 } from '../../modules/bioskryb/plot_germline_prevalence_distributions/main.nf'                                               addParams( timestamp: params.timestamp )
+include { SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS                  } from '../../modules/bioskryb/subset_merged_vcf_high_confidence_germline_from_stats/main.nf'                               addParams( timestamp: params.timestamp )
+include { CREATE_ADO_TABLE_FROM_GERMLINE_VCF                                     } from '../../modules/bioskryb/create_ado_table_from_germline_vcf/main.nf'                                                   addParams( timestamp: params.timestamp )
+include { SUMMARIZE_ADO_INTERVALS                                                 } from '../../modules/bioskryb/ado/summarize_ado_intervals_r/main.nf'                                                        addParams( timestamp: params.timestamp )
+include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_STATS               } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                                addParams( timestamp: params.timestamp )
+include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_VEP                 } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                                addParams( timestamp: params.timestamp )
+include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_BULK                } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                                addParams( timestamp: params.timestamp )
+include { PLOT_ADO_GERMLINE_COMPARISON                                           } from '../../modules/bioskryb/plot_ado_germline_comparison/main.nf'                                                          addParams( timestamp: params.timestamp )
 
 // ============================================================================
 // WORKFLOW
@@ -626,6 +636,95 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         }
     }
 
+    // ── Germline identification and per-sample subsetting ────────────────────
+    ch_identify_germline_input = MERGE_PROCESSED_VCF.out.merged_vcf
+        .combine(CUSTOM_VARIANT_FILTER_PROVENANCE.out.master_table,         by: 0)
+        .combine(FILTER_VEP_GERMLINE.out.filter_provenance,                  by: 0)
+        .combine(FILTER_CHOSEN_VARIANTS_BY_BULK.out.bulk_filter_provenance,  by: 0)
+
+    IDENTIFY_GERMLINE_FROM_STATS (
+        ch_identify_germline_input,
+        params.germline_prev_pct,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    EXTRACT_GERMLINE_PREVALENCE_TABLE (
+        IDENTIFY_GERMLINE_FROM_STATS.out.annotated_vcf,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS (
+        EXTRACT_GERMLINE_PREVALENCE_TABLE.out.prevalence_table,
+        params.germline_prev_pct,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    ch_subset_germline_input = ch_per_sample
+        .combine(IDENTIFY_GERMLINE_FROM_STATS.out.annotated_vcf, by: 0)
+
+    SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS (
+        ch_subset_germline_input,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    // ── ADO analysis on per-sample germline VCFs ──────────────────────────────
+    ch_ado_input = SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS.out.stats_vcf
+        .map { group, sample_name, vcf, tbi -> tuple("${sample_name}_stats", vcf, tbi) }
+        .mix(
+            SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS.out.vep_vcf
+                .map { group, sample_name, vcf, tbi -> tuple("${sample_name}_vep", vcf, tbi) },
+            SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS.out.bulk_vcf
+                .map { group, sample_name, vcf, tbi -> tuple("${sample_name}_bulk", vcf, tbi) }
+        )
+
+    CREATE_ADO_TABLE_FROM_GERMLINE_VCF (
+        ch_ado_input,
+        params.ado_sample_prop,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    SUMMARIZE_ADO_INTERVALS (
+        CREATE_ADO_TABLE_FROM_GERMLINE_VCF.out.ado_table
+            .filter { sample_name, tsv -> tsv.size() > 0 },
+        params.ado_cov_cutoff,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    ch_df_sum_by_prov = SUMMARIZE_ADO_INTERVALS.out.df_sum
+        .flatten()
+        .branch {
+            stats: it.name.contains('_stats')
+            vep:   it.name.contains('_vep')
+            bulk:  it.name.contains('_bulk')
+        }
+
+    CONCAT_ADO_STATS ( ch_df_sum_by_prov.stats.collect(), 'stats', params.publish_dir, params.enable_publish )
+    CONCAT_ADO_VEP   ( ch_df_sum_by_prov.vep.collect(),   'vep',   params.publish_dir, params.enable_publish )
+    CONCAT_ADO_BULK  ( ch_df_sum_by_prov.bulk.collect(),  'bulk',  params.publish_dir, params.enable_publish )
+
+    ch_plot_ado_tables = CONCAT_ADO_STATS.out.merged_ADO
+        .mix( CONCAT_ADO_VEP.out.merged_ADO  )
+        .mix( CONCAT_ADO_BULK.out.merged_ADO )
+        .collect()
+
+    ch_plot_ado_summaries = CONCAT_ADO_STATS.out.summary_ADO
+        .mix( CONCAT_ADO_VEP.out.summary_ADO  )
+        .mix( CONCAT_ADO_BULK.out.summary_ADO )
+        .collect()
+
+    PLOT_ADO_GERMLINE_COMPARISON (
+        ch_plot_ado_tables,
+        ch_plot_ado_summaries,
+        params.publish_dir,
+        params.enable_publish
+    )
+
     // ── Master report ─────────────────────────────────────────────────────────
     ch_postprocess_grouped = POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE.out.postprocess_outputs
         .map { group, snv_dir, indel_dir, both_dir -> tuple(group, [snv_dir, indel_dir, both_dir]) }
@@ -637,11 +736,13 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
             by: 0
         )
         .join( CUSTOM_VARIANT_FILTER_PROVENANCE.out.combined_report, by: 0 )
+        .join( PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS.out.prevalence_plot, by: 0 )
 
     COMPILE_MASTER_REPORT (
         ch_compile_input,
         ch_sig_zero_png,
         ch_sig_cosine_png,
+        PLOT_ADO_GERMLINE_COMPARISON.out.combined_plot,
         params.publish_dir,
         params.enable_publish
     )

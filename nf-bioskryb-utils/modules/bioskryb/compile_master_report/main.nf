@@ -19,6 +19,8 @@ params.timestamp = ""
 //   combined_report_pdf  — Patient_filter_report_combined_${group}.pdf
 //   zero_filtered_png    — zero_filtered_signature_activities.png  (or /dev/null sentinel)
 //   cosine_filtered_png  — cosine_filtered_signature_activities.png (or /dev/null sentinel)
+//   prevalence_plot_png  — germline_prevalence_distributions_${group}.png
+//   ado_summary_png      — ADO_germline_comparison.png
 process COMPILE_MASTER_REPORT {
     tag "${group}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled: "$enable_publish"
@@ -27,9 +29,11 @@ process COMPILE_MASTER_REPORT {
     tuple val(group),
           path(postprocess_dirs),
           path(tree_comparison_pdf),
-          path(combined_report_pdf)
+          path(combined_report_pdf),
+          path(prevalence_plot_png)
     path(zero_filtered_png)
     path(cosine_filtered_png)
+    path(ado_summary_png)
     val(publish_dir)
     val(enable_publish)
 
@@ -88,12 +92,32 @@ process COMPILE_MASTER_REPORT {
         echo "[compile_master_report] SKIP: cosine_filtered signature PNG not available"
     fi
 
-    # ── SECTION 4: Phylogenetic Tree Topology Comparison ─────────────────────
-    add_section "Phylogenetic Tree Topology Comparison" "sec04_tree_comparison.pdf"
+    # ── SECTION 4: Germline Prevalence Distributions ─────────────────────────
+    add_section "Germline Prevalence Distributions" "sec04_prevalence.pdf"
+    if [ -s "${prevalence_plot_png}" ]; then
+        Rscript /usr/local/bin/png_to_pdf.R "${prevalence_plot_png}" prevalence.pdf
+        parts="\$parts prevalence.pdf"
+        echo "[compile_master_report] Added germline prevalence distributions plot"
+    else
+        echo "[compile_master_report] SKIP: germline prevalence plot not available"
+    fi
+
+    # ── SECTION 5: ADO Germline Summary ──────────────────────────────────────
+    add_section "ADO Germline Summary" "sec05_ado_summary.pdf"
+    if [ -s "${ado_summary_png}" ]; then
+        Rscript /usr/local/bin/png_to_pdf.R "${ado_summary_png}" ado_summary.pdf
+        parts="\$parts ado_summary.pdf"
+        echo "[compile_master_report] Added ADO germline summary plot"
+    else
+        echo "[compile_master_report] SKIP: ADO summary plot not available"
+    fi
+
+    # ── SECTION 6: Phylogenetic Tree Topology Comparison ─────────────────────
+    add_section "Phylogenetic Tree Topology Comparison" "sec06_tree_comparison.pdf"
     add_pdf "${tree_comparison_pdf}"
 
-    # ── SECTION 5: Variant Filter Provenance Report ───────────────────────────
-    add_section "Variant Filter Provenance Report" "sec05_filter_report.pdf"
+    # ── SECTION 7: Variant Filter Provenance Report ───────────────────────────
+    add_section "Variant Filter Provenance Report" "sec07_filter_report.pdf"
     add_pdf "${combined_report_pdf}"
 
     # ── Assemble ──────────────────────────────────────────────────────────────
