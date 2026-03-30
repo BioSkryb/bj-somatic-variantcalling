@@ -4,67 +4,73 @@ nextflow.enable.dsl=2
 // IMPORT MODULES
 // ============================================================================
 
-include { PREPROCESS_VCF                                                         } from '../../modules/bcftools/filter_norm_addqual/main.nf'                                                              addParams( timestamp: params.timestamp )
-include { MERGE_PROCESSED_VCF                                                    } from '../../modules/bcftools/merge_processed_vcf/main.nf'                                                              addParams( timestamp: params.timestamp )
-include { CUSTOM_BAM_GROUP_PILEUP                                                } from '../../modules/bioskryb/custom_bam_group_pileup/main.nf'                                                          addParams( timestamp: params.timestamp )
-include { CREATE_TAB_NVNR                                                        } from '../../modules/bioskryb/create_tab_nvnr/main.nf'                                                                  addParams( timestamp: params.timestamp )
-include { SEQUOIA_BINOM_BETABINOM_TAB_NV_NR                                     } from '../../modules/bioskryb/sequoia_binom_betabinom_tab_nv_nr/main.nf'                                                addParams( timestamp: params.timestamp )
-include { CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR                               } from '../../modules/bioskryb/concat_filter_binom_betabinom_tab_nv_nr/main.nf'                                          addParams( timestamp: params.timestamp )
-include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIGAR } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_1_samplelevel_process_pileup_sample_cigar/main.nf' addParams( timestamp: params.timestamp )
-include { CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES                               } from '../../modules/bioskryb/custom_somatic_snpindel_filterrawtables/main.nf'                                          addParams( timestamp: params.timestamp )
-include { CUSTOM_CREATE_GROUP_LEVEL_TAB_DFS                                     } from '../../modules/bioskryb/custom_create_group_level_tab_dfs/main.nf'                                                addParams( timestamp: params.timestamp )
-include { BULK_GET_VARIANTS_TO_FILTER                                            } from '../../modules/bioskryb/custom_bulk_get_variants_to_filter/main.nf'                                               addParams( timestamp: params.timestamp )
-include { SEQUOIA_SECOND_FILTER                                                  } from '../../modules/sequoia/main.nf'                                                                                   addParams( timestamp: params.timestamp )
-include { SUBSET_VCF_VARIANTS                                                    } from '../../modules/bioskryb/subset_vcf_variants/main.nf'                                                              addParams( timestamp: params.timestamp )
-include { POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE                                   } from '../../modules/bioskryb/custom_postprocess_sequoia_drawvafheat_tree/main.nf'                                      addParams( timestamp: params.timestamp )
-include { CUSTOM_VARIANT_FILTER_PROVENANCE                                       } from '../../modules/bioskryb/custom_variant_filter_provenance/main.nf'                                                 addParams( timestamp: params.timestamp )
-include { LIST_SAMPLES_FROM_GROUP_VCF                                            } from '../../modules/bioskryb/list_samples_from_vcf/main.nf'                                                            addParams( timestamp: params.timestamp )
-include { ANNOTATE_SAMPLE_VCF                                                    } from '../../modules/bioskryb/annotate_sample_vcf/main.nf'                                                              addParams( timestamp: params.timestamp )
-include { GENOTYPE_TABLE_FROM_ANNOTATED_VCF                                      } from '../../modules/bioskryb/genotype_table_from_annotated_vcf/main.nf'                                               addParams( timestamp: params.timestamp )
-include { CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF                               } from '../../modules/bioskryb/create_nr_nv_matrices_from_annotated_vcf/main.nf'                                        addParams( timestamp: params.timestamp )
-include { SEQUOIA_PHYLOGENY_SNV                                                  } from '../../modules/bioskryb/sequoia_phylogeny_snv/main.nf'                                                            addParams( timestamp: params.timestamp )
-include { SEQUOIA_PHYLOGENY_INDEL                                                } from '../../modules/bioskryb/sequoia_phylogeny_indel/main.nf'                                                          addParams( timestamp: params.timestamp )
-include { SEQUOIA_PHYLOGENY_BOTH                                                 } from '../../modules/bioskryb/sequoia_phylogeny_both/main.nf'                                                           addParams( timestamp: params.timestamp )
-include { TREES_COMPARE_SIMILARITIES                                             } from '../../modules/bioskryb/trees_compare_similarities/main.nf'                                                       addParams( timestamp: params.timestamp )
-include { SEQUOIA_VARIANT_PLACEMENT_SNV                                          } from '../../modules/bioskryb/sequoia_variant_placement_snv/main.nf'                                                    addParams( timestamp: params.timestamp )
-include { SEQUOIA_VARIANT_PLACEMENT_INDEL                                        } from '../../modules/bioskryb/sequoia_variant_placement_indel/main.nf'                                                  addParams( timestamp: params.timestamp )
-include { SEQUOIA_VARIANT_PLACEMENT_BOTH                                         } from '../../modules/bioskryb/sequoia_variant_placement_both/main.nf'                                                   addParams( timestamp: params.timestamp )
-include { SUBSET_ANNOTATED_VCFS_FOR_MUTSIG                                       } from '../../modules/bioskryb/subset_annotated_vcfs_for_mutsig/main.nf'                                                addParams( timestamp: params.timestamp )
-include { SIGPROFILER_ASSIGNMENT                                                  } from '../../modules/bioskryb/sigprofiler_assignment/main.nf'                                                          addParams( timestamp: params.timestamp )
-include { MERGE_SIGNATURE_ACTIVITIES                                             } from '../../modules/bioskryb/merge_signature_activities/main.nf'                                                       addParams( timestamp: params.timestamp )
-include { PLOT_ASSIGNED_SIGNATURE_ACTIVITIES as PLOT_ZERO_FILTERED_SIGNATURE_ACTIVITIES   } from '../../modules/bioskryb/plot_assigned_signature_activities/main.nf' addParams( timestamp: params.timestamp )
-include { PLOT_ASSIGNED_SIGNATURE_ACTIVITIES as PLOT_COSINE_FILTERED_SIGNATURE_ACTIVITIES } from '../../modules/bioskryb/plot_assigned_signature_activities/main.nf' addParams( timestamp: params.timestamp )
-include { FILTER_VARIANTS_BY_SIG_PROBABILITY                                     } from '../../modules/bioskryb/filter_variants_by_sig_probability/main.nf'                                              addParams( timestamp: params.timestamp )
-include { MERGE_SIG_COSINE_SIMILARITIES                                          } from '../../modules/bioskryb/merge_sig_cosine_similarities/main.nf'                                                    addParams( timestamp: params.timestamp )
-include { FILTER_ACTIVITIES_BY_COSINE                                            } from '../../modules/bioskryb/filter_activities_by_cosine/main.nf'                                                      addParams( timestamp: params.timestamp )
-include { SUBSET_MERGED_VCF_CHOSEN_VARIANTS                                      } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
-include { SPLIT_SUBSET_VCF_BY_CHR                                                } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
-include { VEP_ANNOTATE                                                           } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                              addParams( timestamp: params.timestamp )
-include { SORT_INDEX_VEP_VCF                                                     } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
-include { MERGE_VEP_VCF_BY_GROUP                                                 } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
-include { FILTER_VEP_GERMLINE                                                    } from '../../modules/bioskryb/filter_vep_germline/main.nf'                                                              addParams( timestamp: params.timestamp )
-include { CREATE_EMPTY_BULK_VARIANTS                                             } from '../../modules/bioskryb/filter_chosen_variants_by_bulk/main.nf'                                                   addParams( timestamp: params.timestamp )
-include { FILTER_CHOSEN_VARIANTS_BY_BULK                                         } from '../../modules/bioskryb/filter_chosen_variants_by_bulk/main.nf'                                                   addParams( timestamp: params.timestamp )
-include { GET_VARIANTS_FROM_MERGED_VCF                                           } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
-include { GET_LIST_POS_FROM_CHOSEN_VARIANTS                                      } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
-include { FILTER_DF_NV_BY_CHOSEN_VARIANTS                                        } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
-include { COMPILE_MASTER_REPORT                                                  } from '../../modules/bioskryb/compile_master_report/main.nf'                                                            addParams( timestamp: params.timestamp )
-include { IDENTIFY_GERMLINE_FROM_STATS                                           } from '../../modules/bioskryb/identify_germline_from_stats/main.nf'                                                          addParams( timestamp: params.timestamp )
-include { EXTRACT_GERMLINE_PREVALENCE_TABLE                                      } from '../../modules/bioskryb/extract_germline_prevalence_table/main.nf'                                                     addParams( timestamp: params.timestamp )
-include { PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS                                 } from '../../modules/bioskryb/plot_germline_prevalence_distributions/main.nf'                                               addParams( timestamp: params.timestamp )
-include { SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS                  } from '../../modules/bioskryb/subset_merged_vcf_high_confidence_germline_from_stats/main.nf'                               addParams( timestamp: params.timestamp )
-include { CREATE_ADO_TABLE_FROM_GERMLINE_VCF                                     } from '../../modules/bioskryb/create_ado_table_from_germline_vcf/main.nf'                                                   addParams( timestamp: params.timestamp )
-include { SUMMARIZE_ADO_INTERVALS                                                 } from '../../modules/bioskryb/ado/summarize_ado_intervals_r/main.nf'                                                        addParams( timestamp: params.timestamp )
-include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_STATS               } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                                addParams( timestamp: params.timestamp )
-include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_VEP                 } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                                addParams( timestamp: params.timestamp )
-include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_BULK                } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                                addParams( timestamp: params.timestamp )
-include { PLOT_ADO_GERMLINE_COMPARISON                                           } from '../../modules/bioskryb/plot_ado_germline_comparison/main.nf'                                                          addParams( timestamp: params.timestamp )
+include { PREPROCESS_VCF                                                              } from '../../modules/bcftools/filter_norm_addqual/main.nf'                                                              addParams( timestamp: params.timestamp )
+include { MERGE_PROCESSED_VCF                                                         } from '../../modules/bcftools/merge_processed_vcf/main.nf'                                                              addParams( timestamp: params.timestamp )
+include { CUSTOM_BAM_GROUP_PILEUP                                                     } from '../../modules/bioskryb/custom_bam_group_pileup/main.nf'                                                          addParams( timestamp: params.timestamp )
+include { CREATE_TAB_NVNR                                                             } from '../../modules/bioskryb/create_tab_nvnr/main.nf'                                                                  addParams( timestamp: params.timestamp )
+include { SEQUOIA_BINOM_BETABINOM_TAB_NV_NR                                          } from '../../modules/bioskryb/sequoia_binom_betabinom_tab_nv_nr/main.nf'                                                addParams( timestamp: params.timestamp )
+include { CONCAT_FILTER_BINOM_BETABINOM_TAB_NV_NR                                    } from '../../modules/bioskryb/concat_filter_binom_betabinom_tab_nv_nr/main.nf'                                          addParams( timestamp: params.timestamp )
+include { CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIGAR } from '../../modules/bioskryb/custom_rscript_somaticsnp_filter_1_samplelevel_process_pileup_sample_cigar/main.nf'       addParams( timestamp: params.timestamp )
+include { CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES                                    } from '../../modules/bioskryb/custom_somatic_snpindel_filterrawtables/main.nf'                                          addParams( timestamp: params.timestamp )
+include { CUSTOM_CREATE_GROUP_LEVEL_TAB_DFS                                          } from '../../modules/bioskryb/custom_create_group_level_tab_dfs/main.nf'                                                addParams( timestamp: params.timestamp )
+include { BULK_GET_VARIANTS_TO_FILTER                                                 } from '../../modules/bioskryb/custom_bulk_get_variants_to_filter/main.nf'                                               addParams( timestamp: params.timestamp )
+include { SEQUOIA_SECOND_FILTER                                                       } from '../../modules/sequoia/main.nf'                                                                                   addParams( timestamp: params.timestamp )
+include { SUBSET_VCF_VARIANTS                                                         } from '../../modules/bioskryb/subset_vcf_variants/main.nf'                                                              addParams( timestamp: params.timestamp )
+include { POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE                                        } from '../../modules/bioskryb/custom_postprocess_sequoia_drawvafheat_tree/main.nf'                                      addParams( timestamp: params.timestamp )
+include { CUSTOM_VARIANT_FILTER_PROVENANCE                                            } from '../../modules/bioskryb/custom_variant_filter_provenance/main.nf'                                                 addParams( timestamp: params.timestamp )
+include { LIST_SAMPLES_FROM_GROUP_VCF                                                 } from '../../modules/bioskryb/list_samples_from_vcf/main.nf'                                                            addParams( timestamp: params.timestamp )
+include { ANNOTATE_SAMPLE_VCF                                                         } from '../../modules/bioskryb/annotate_sample_vcf/main.nf'                                                              addParams( timestamp: params.timestamp )
+include { EXTRACT_NR_NV_GT_FROM_ANNOTATED_VCF                                        } from '../../modules/bioskryb/extract_nr_nv_gt_from_annotated_vcf/main.nf'                                              addParams( timestamp: params.timestamp )
+include { GENOTYPE_TABLE_FROM_ANNOTATED_VCF                                          } from '../../modules/bioskryb/genotype_table_from_annotated_vcf/main.nf'                                               addParams( timestamp: params.timestamp )
+include { CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF                                   } from '../../modules/bioskryb/create_nr_nv_matrices_from_annotated_vcf/main.nf'                                        addParams( timestamp: params.timestamp )
+include { PLOT_MATRIX_SCHEME_SUMMARY                                                  } from '../../modules/bioskryb/plot_matrix_scheme_summary/main.nf'                                                       addParams( timestamp: params.timestamp )
+include { SEQUOIA_PHYLOGENY_SNV                                                       } from '../../modules/bioskryb/sequoia_phylogeny_snv/main.nf'                                                            addParams( timestamp: params.timestamp )
+include { SEQUOIA_PHYLOGENY_INDEL                                                     } from '../../modules/bioskryb/sequoia_phylogeny_indel/main.nf'                                                          addParams( timestamp: params.timestamp )
+include { SEQUOIA_PHYLOGENY_BOTH                                                      } from '../../modules/bioskryb/sequoia_phylogeny_both/main.nf'                                                           addParams( timestamp: params.timestamp )
+include { TREES_COMPARE_SIMILARITIES                                                  } from '../../modules/bioskryb/trees_compare_similarities/main.nf'                                                       addParams( timestamp: params.timestamp )
+include { SEQUOIA_VARIANT_PLACEMENT_SNV                                               } from '../../modules/bioskryb/sequoia_variant_placement_snv/main.nf'                                                    addParams( timestamp: params.timestamp )
+include { SEQUOIA_VARIANT_PLACEMENT_INDEL                                             } from '../../modules/bioskryb/sequoia_variant_placement_indel/main.nf'                                                  addParams( timestamp: params.timestamp )
+include { SEQUOIA_VARIANT_PLACEMENT_BOTH                                              } from '../../modules/bioskryb/sequoia_variant_placement_both/main.nf'                                                   addParams( timestamp: params.timestamp )
+include { SUBSET_ANNOTATED_VCFS_FOR_MUTSIG                                           } from '../../modules/bioskryb/subset_annotated_vcfs_for_mutsig/main.nf'                                                addParams( timestamp: params.timestamp )
+include { SIGPROFILER_ASSIGNMENT                                                       } from '../../modules/bioskryb/sigprofiler_assignment/main.nf'                                                          addParams( timestamp: params.timestamp )
+include { MERGE_SIGNATURE_ACTIVITIES                                                  } from '../../modules/bioskryb/merge_signature_activities/main.nf'                                                       addParams( timestamp: params.timestamp )
+include { COMPUTE_MUTSIG_COVERAGE                                                     } from '../../modules/bioskryb/compute_mutsig_coverage/main.nf'                                                          addParams( timestamp: params.timestamp )
+include { MERGE_MUTSIG_COVERAGE                                                       } from '../../modules/bioskryb/merge_mutsig_coverage/main.nf'                                                            addParams( timestamp: params.timestamp )
+include { PLOT_SIGNATURE_BARGRAPHS                                                    } from '../../modules/bioskryb/plot_signature_bargraphs/main.nf'                                                         addParams( timestamp: params.timestamp )
+include { FILTER_VARIANTS_BY_SIG_PROBABILITY                                         } from '../../modules/bioskryb/filter_variants_by_sig_probability/main.nf'                                              addParams( timestamp: params.timestamp )
+include { MERGE_SIG_COSINE_SIMILARITIES                                               } from '../../modules/bioskryb/merge_sig_cosine_similarities/main.nf'                                                    addParams( timestamp: params.timestamp )
+include { FILTER_ACTIVITIES_BY_COSINE                                                 } from '../../modules/bioskryb/filter_activities_by_cosine/main.nf'                                                      addParams( timestamp: params.timestamp )
+include { SUBSET_MERGED_VCF_CHOSEN_VARIANTS                                          } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
+include { SPLIT_SUBSET_VCF_BY_CHR                                                    } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
+include { VEP_ANNOTATE                                                                } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                              addParams( timestamp: params.timestamp )
+include { SORT_INDEX_VEP_VCF                                                         } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
+include { MERGE_VEP_VCF_BY_GROUP                                                     } from '../../modules/bioskryb/vep_chosen_variants/main.nf'                                                             addParams( timestamp: params.timestamp )
+include { FILTER_VEP_GERMLINE                                                        } from '../../modules/bioskryb/filter_vep_germline/main.nf'                                                              addParams( timestamp: params.timestamp )
+include { CREATE_EMPTY_BULK_VARIANTS                                                  } from '../../modules/bioskryb/filter_chosen_variants_by_bulk/main.nf'                                                   addParams( timestamp: params.timestamp )
+include { FILTER_CHOSEN_VARIANTS_BY_BULK                                             } from '../../modules/bioskryb/filter_chosen_variants_by_bulk/main.nf'                                                   addParams( timestamp: params.timestamp )
+include { GET_VARIANTS_FROM_MERGED_VCF                                               } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
+include { GET_LIST_POS_FROM_CHOSEN_VARIANTS                                          } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
+include { FILTER_DF_NV_BY_CHOSEN_VARIANTS                                            } from '../../modules/bioskryb/get_variants_and_list_pos/main.nf'                                                        addParams( timestamp: params.timestamp )
+include { COMPILE_MASTER_REPORT                                                       } from '../../modules/bioskryb/compile_master_report/main.nf'                                                            addParams( timestamp: params.timestamp )
+include { IDENTIFY_GERMLINE_FROM_STATS                                                } from '../../modules/bioskryb/identify_germline_from_stats/main.nf'                                                     addParams( timestamp: params.timestamp )
+include { EXTRACT_GERMLINE_PREVALENCE_TABLE                                          } from '../../modules/bioskryb/extract_germline_prevalence_table/main.nf'                                                 addParams( timestamp: params.timestamp )
+include { PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS                                     } from '../../modules/bioskryb/plot_germline_prevalence_distributions/main.nf'                                            addParams( timestamp: params.timestamp )
+include { SUBSET_MERGED_VCF_HIGH_CONFIDENCE_GERMLINE_FROM_STATS                     } from '../../modules/bioskryb/subset_merged_vcf_high_confidence_germline_from_stats/main.nf'                            addParams( timestamp: params.timestamp )
+include { CREATE_ADO_TABLE_FROM_GERMLINE_VCF                                         } from '../../modules/bioskryb/create_ado_table_from_germline_vcf/main.nf'                                               addParams( timestamp: params.timestamp )
+include { SUMMARIZE_ADO_INTERVALS                                                     } from '../../modules/bioskryb/ado/summarize_ado_intervals_r/main.nf'                                                    addParams( timestamp: params.timestamp )
+include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_STATS                  } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                              addParams( timestamp: params.timestamp )
+include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_VEP                    } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                              addParams( timestamp: params.timestamp )
+include { CONCAT_SUMMARY_ADO_INTERVALS_LABELED as CONCAT_ADO_BULK                   } from '../../modules/bioskryb/concat_summary_ado_intervals_labeled/main.nf'                                              addParams( timestamp: params.timestamp )
+include { PLOT_ADO_GERMLINE_COMPARISON                                               } from '../../modules/bioskryb/plot_ado_germline_comparison/main.nf'                                                      addParams( timestamp: params.timestamp )
 
 // ============================================================================
 // WORKFLOW
 // ============================================================================
 
 workflow SOMATIC_SNP_INDEL_FILTERING_WF {
+
+    assert params.sequoia_phylogeny_mode in ['snv', 'indel', 'both', 'all'] :
+        "Invalid sequoia_phylogeny_mode '${params.sequoia_phylogeny_mode}'. Valid values: snv, indel, both, all"
 
     Channel.fromPath( params.input_csv ).
         splitCsv( header:true )
@@ -138,7 +144,23 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         .groupTuple(by: 0)
         .map{ it -> [it[0],it[1].flatten().collect()] }
 
-    ch_chr = Channel.of( params.chrs instanceof List ? params.chrs : params.chrs.tokenize(',') ).flatMap()
+    // Use provided chrs, or generate dynamically based on gender
+    def chrs
+    if (params.chrs) {
+        // If chrs passed via command line, use it
+        chrs = params.chrs instanceof List ? params.chrs : params.chrs.tokenize(',').collect { it.trim() }
+    } else {
+        // Dynamic chromosome generation based on gender
+        chrs = (params.gender == 'male')
+            ? ['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX','chrY']
+            : ['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX']
+    }
+
+    if (params.extra_chromosomes) {
+        chrs = chrs + params.extra_chromosomes.tokenize(',').collect { it.trim() }
+    }
+
+    ch_chr = Channel.of( chrs ).flatMap()
 
     ch_input_bam_group_pileup = inputs.ch_bam
         .map{ it -> [it[2],it[0],it[1]] }
@@ -208,7 +230,7 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
     )
 
     ch_subset_by_chr = SUBSET_MERGED_VCF_CHOSEN_VARIANTS.out.subset_vcf
-        .combine(Channel.of( params.chrs instanceof List ? params.chrs : params.chrs.tokenize(',') ).flatMap())
+        .combine(Channel.of( chrs ).flatMap())
 
     SPLIT_SUBSET_VCF_BY_CHR (
         ch_subset_by_chr,
@@ -318,6 +340,7 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         params.second_pass_betabinomial_cutoff_rho_indel,
         params.aggregated_hq_min_mean_depth,
         params.aggregated_hq_max_mean_depth,
+        params.gender,
         params.publish_dir,
         params.enable_publish
     )
@@ -339,6 +362,7 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         .combine(ch_pileup_per_group,                                        by: 0)
         .combine(SEQUOIA_SECOND_FILTER.out.df_filter,                        by: 0)
         .combine(ch_tab_nvnr_per_group,                                      by: 0)
+        .combine(MERGE_PROCESSED_VCF.out.df_nv,                             by: 0)
 
     CUSTOM_VARIANT_FILTER_PROVENANCE (
         ch_input_variant_provenance,
@@ -368,36 +392,94 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         params.enable_publish
     )
 
-    // ── Genotype tables ───────────────────────────────────────────────────────
+    // ── Per-sample NR/NV/GT extraction — runs in parallel across all samples ───
+    EXTRACT_NR_NV_GT_FROM_ANNOTATED_VCF (
+        ANNOTATE_SAMPLE_VCF.out.annotated_vcf,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    // Group per-sample vectors + annotated VCFs by group for matrix assembly
+    ch_annotated_grouped = ANNOTATE_SAMPLE_VCF.out.annotated_vcf
+        .groupTuple(by: 0)
+
+    ch_extracted_grouped = EXTRACT_NR_NV_GT_FROM_ANNOTATED_VCF.out.per_sample_vectors
+        .groupTuple(by: 0)
+        .map { group, sample_names, nr_files, nv_files, gt_files, vid_files ->
+            tuple(group, sample_names, nr_files, nv_files, gt_files, vid_files)
+        }
+
+    ch_nr_nv_matrices_input = ch_extracted_grouped
+        .join(ch_annotated_grouped, by: 0)
+        .map { group, sample_names, nr_files, nv_files, gt_files, vid_files, sample_names2, vcfs, tbis ->
+            tuple(group, sample_names, nr_files, nv_files, gt_files, vid_files, vcfs, tbis)
+        }
+
+    CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF (
+        ch_nr_nv_matrices_input,
+        params.publish_dir,
+        params.enable_publish
+    )
+
+    PLOT_MATRIX_SCHEME_SUMMARY (
+        CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.matrix_scheme_summary
+            .join(CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.matrix_per_sample_summary, by: 0)
+            .join(CUSTOM_VARIANT_FILTER_PROVENANCE.out.upstream_per_sample, by: 0),
+        params.publish_dir,
+        params.enable_publish
+    )
+    ch_matrix_scheme_pdf = PLOT_MATRIX_SCHEME_SUMMARY.out.scheme_summary_pdf
+
+    // When false: skip GENOTYPE_TABLE, all SEQUOIA_PHYLOGENY/PLACEMENT, POSTPROCESS,
+    // TREES_COMPARE, and mutsig. ch_postprocess_grouped / ch_tree_comparison_pdf /
+    // ch_sig_* are set to /dev/null stubs so COMPILE_MASTER_REPORT still runs.
+    if (params.run_phylogeny_mutsig) {
+
+    // ── Per-sample genotype tables ────────────────────────────────────────────
     GENOTYPE_TABLE_FROM_ANNOTATED_VCF (
         ANNOTATE_SAMPLE_VCF.out.annotated_vcf,
         params.publish_dir,
         params.enable_publish
     )
 
-    // ── NR/NV matrices ────────────────────────────────────────────────────────
-    ch_annotated_grouped = ANNOTATE_SAMPLE_VCF.out.annotated_vcf
-        .groupTuple(by: 0)
+    // ── Explode NR/NV matrix list into per-label tuples ───────────────────────
+    // phylogeny_schemes (optional): comma-separated whitelist of scheme labels.
+    def allowed_schemes = params.phylogeny_schemes
+        ? params.phylogeny_schemes.tokenize(',').collect { it.trim() }
+        : null
+    def num_active_schemes = allowed_schemes ? allowed_schemes.size() : 4
 
-    CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF (
-        ch_annotated_grouped,
-        params.publish_dir,
-        params.enable_publish
-    )
+    def explode_matrices = { group, nr_list, nv_list ->
+        def nrs = nr_list instanceof List ? nr_list : [nr_list]
+        def nvs = nv_list instanceof List ? nv_list : [nv_list]
+        nrs.collect { nr ->
+            def label = nr.name
+                .replaceFirst("NR_annotated_vcf_${group}_".toString(), '')
+                .replaceFirst('\\.tsv$', '')
+            def nv = nvs.find { it.name == "NV_annotated_vcf_${group}_${label}.tsv" }
+            tuple(group, label, nr, nv)
+        }
+    }
 
-    // ── Phylogenetic trees ────────────────────────────────────────────────────
+    ch_matrix_pairs_snv   = CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
+        .flatMap { group, nr_list, nv_list -> explode_matrices(group, nr_list, nv_list) }
+    ch_matrix_pairs_indel = CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
+        .flatMap { group, nr_list, nv_list -> explode_matrices(group, nr_list, nv_list) }
+    ch_matrix_pairs_both  = CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
+        .flatMap { group, nr_list, nv_list -> explode_matrices(group, nr_list, nv_list) }
+
+    if (allowed_schemes) {
+        ch_matrix_pairs_snv   = ch_matrix_pairs_snv.filter   { group, label, nr, nv -> label in allowed_schemes }
+        ch_matrix_pairs_indel = ch_matrix_pairs_indel.filter { group, label, nr, nv -> label in allowed_schemes }
+        ch_matrix_pairs_both  = ch_matrix_pairs_both.filter  { group, label, nr, nv -> label in allowed_schemes }
+    }
+
+    // ── Phylogenies — one job per (group, label) ──────────────────────────────
     SEQUOIA_PHYLOGENY_SNV (
-        CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices,
+        params.sequoia_phylogeny_mode in ['snv', 'all'] ? ch_matrix_pairs_snv : Channel.empty(),
         params.gender,
         params.sequoia_vaf_absent,
         params.sequoia_vaf_present,
-        params.sequoia_tree_mut_pval,
-        params.sequoia_keep_ancestral,
-        params.sequoia_split_trees,
-        params.sequoia_genotype_conv_prob,
-        params.sequoia_min_pval_for_true_somatic,
-        params.sequoia_min_variant_reads_shared,
-        params.sequoia_min_vaf_shared,
         params.sequoia_create_multi_tree,
         params.sequoia_mpboot_path,
         params.publish_dir,
@@ -405,17 +487,10 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
     )
 
     SEQUOIA_PHYLOGENY_INDEL (
-        CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices,
+        params.sequoia_phylogeny_mode in ['indel', 'all'] ? ch_matrix_pairs_indel : Channel.empty(),
         params.gender,
         params.sequoia_vaf_absent,
         params.sequoia_vaf_present,
-        params.sequoia_tree_mut_pval,
-        params.sequoia_keep_ancestral,
-        params.sequoia_split_trees,
-        params.sequoia_genotype_conv_prob,
-        params.sequoia_min_pval_for_true_somatic,
-        params.sequoia_min_variant_reads_shared,
-        params.sequoia_min_vaf_shared,
         params.sequoia_create_multi_tree,
         params.sequoia_mpboot_path,
         params.publish_dir,
@@ -423,31 +498,49 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
     )
 
     SEQUOIA_PHYLOGENY_BOTH (
-        CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices,
+        params.sequoia_phylogeny_mode in ['both', 'all'] ? ch_matrix_pairs_both : Channel.empty(),
         params.gender,
         params.sequoia_vaf_absent,
         params.sequoia_vaf_present,
-        params.sequoia_tree_mut_pval,
-        params.sequoia_keep_ancestral,
-        params.sequoia_split_trees,
-        params.sequoia_genotype_conv_prob,
-        params.sequoia_min_pval_for_true_somatic,
-        params.sequoia_min_variant_reads_shared,
-        params.sequoia_min_vaf_shared,
         params.sequoia_create_multi_tree,
         params.sequoia_mpboot_path,
         params.publish_dir,
         params.enable_publish
     )
 
+    // ── Re-group per-label outputs back into per-group lists ──────────────────
+    ch_snv_phy_grouped = params.sequoia_phylogeny_mode in ['snv', 'all']
+        ? SEQUOIA_PHYLOGENY_SNV.out.phylogeny_outputs.groupTuple(by: 0)
+        : CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
+            .map { group, nr_list, nv_list -> tuple(group, [file('/dev/null')]) }
+
+    ch_indel_phy_grouped = params.sequoia_phylogeny_mode in ['indel', 'all']
+        ? SEQUOIA_PHYLOGENY_INDEL.out.phylogeny_outputs.groupTuple(by: 0)
+        : CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
+            .map { group, nr_list, nv_list -> tuple(group, [file('/dev/null')]) }
+
+    ch_both_phy_grouped = params.sequoia_phylogeny_mode in ['both', 'all']
+        ? SEQUOIA_PHYLOGENY_BOTH.out.phylogeny_outputs.groupTuple(by: 0)
+        : CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
+            .map { group, nr_list, nv_list -> tuple(group, [file('/dev/null')]) }
+
     // ── Tree topology comparison ──────────────────────────────────────────────
-    TREES_COMPARE_SIMILARITIES (
-        SEQUOIA_PHYLOGENY_SNV.out.phylogeny_outputs
-            .join( SEQUOIA_PHYLOGENY_INDEL.out.phylogeny_outputs )
-            .join( SEQUOIA_PHYLOGENY_BOTH.out.phylogeny_outputs ),
-        params.publish_dir,
-        params.enable_publish
-    )
+    if (num_active_schemes >= 2) {
+        TREES_COMPARE_SIMILARITIES (
+            ch_snv_phy_grouped
+                .join( ch_indel_phy_grouped )
+                .join( ch_both_phy_grouped ),
+            params.publish_dir,
+            params.enable_publish
+        )
+        ch_tree_comparison_pdf = TREES_COMPARE_SIMILARITIES.out.comparison_results
+            .map { group, dirs, pdf -> tuple(group, pdf) }
+    } else {
+        ch_tree_comparison_pdf = ch_snv_phy_grouped
+            .join( ch_indel_phy_grouped )
+            .join( ch_both_phy_grouped )
+            .map { group, snv_dirs, indel_dirs, both_dirs -> tuple(group, file('/dev/null')) }
+    }
 
     // ── Variant placement ─────────────────────────────────────────────────────
     CREATE_NR_NV_MATRICES_FROM_ANNOTATED_VCF.out.nr_nv_matrices
@@ -476,15 +569,15 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
         return tf_name ? pileup_dir.resolve(tf_name) : file('/dev/null')
     }
 
-    ch_snv_placement_input = SEQUOIA_PHYLOGENY_SNV.out.phylogeny_outputs
+    ch_snv_placement_input = ch_snv_phy_grouped
         .map { group, outputs -> tuple(group, findPileupTree(outputs, "output_snv_pileup")) }
         .combine(ch_unfiltered.snv, by: 0)
 
-    ch_indel_placement_input = SEQUOIA_PHYLOGENY_INDEL.out.phylogeny_outputs
+    ch_indel_placement_input = ch_indel_phy_grouped
         .map { group, outputs -> tuple(group, findPileupTree(outputs, "output_indel_pileup")) }
         .combine(ch_unfiltered.indel, by: 0)
 
-    ch_both_placement_input = SEQUOIA_PHYLOGENY_BOTH.out.phylogeny_outputs
+    ch_both_placement_input = ch_both_phy_grouped
         .map { group, outputs -> tuple(group, findPileupTree(outputs, "output_both_pileup")) }
         .combine(ch_unfiltered.both, by: 0)
 
@@ -561,6 +654,7 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
 
         SUBSET_ANNOTATED_VCFS_FOR_MUTSIG (
             ANNOTATE_SAMPLE_VCF.out.annotated_vcf,
+            params.mutsig_quality_filter,
             params.publish_dir,
             params.enable_publish
         )
@@ -582,6 +676,16 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
 
         MERGE_SIGNATURE_ACTIVITIES (
             ch_all_assignment_dirs,
+            params.publish_dir,
+            params.enable_publish
+        )
+
+        // Per-sample signature coverage
+        ch_mutsig_coverage_input = SUBSET_ANNOTATED_VCFS_FOR_MUTSIG.out.filtered_vcf
+            .join(SIGPROFILER_ASSIGNMENT.out.assignment_output, by: 0)
+
+        COMPUTE_MUTSIG_COVERAGE (
+            ch_mutsig_coverage_input,
             params.publish_dir,
             params.enable_publish
         )
@@ -617,23 +721,41 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
                 params.enable_publish
             )
 
-            PLOT_ZERO_FILTERED_SIGNATURE_ACTIVITIES (
+            ch_all_coverage_files = COMPUTE_MUTSIG_COVERAGE.out.coverage_tsv
+                .map { sample_name, f -> f }
+                .collect()
+
+            MERGE_MUTSIG_COVERAGE (
+                ch_all_coverage_files,
+                params.publish_dir,
+                params.enable_publish
+            )
+
+            PLOT_SIGNATURE_BARGRAPHS (
                 FILTER_ACTIVITIES_BY_COSINE.out.zero_filtered_activities,
-                "zero_filtered",
-                params.publish_dir,
-                params.enable_publish
-            )
-
-            PLOT_COSINE_FILTERED_SIGNATURE_ACTIVITIES (
                 FILTER_ACTIVITIES_BY_COSINE.out.filtered_activities,
-                "cosine_filtered",
+                MERGE_SIG_COSINE_SIMILARITIES.out.cosine_matrix,
+                MERGE_MUTSIG_COVERAGE.out.merged_coverage,
                 params.publish_dir,
                 params.enable_publish
             )
 
-            ch_sig_zero_png   = PLOT_ZERO_FILTERED_SIGNATURE_ACTIVITIES.out.signature_plot
-            ch_sig_cosine_png = PLOT_COSINE_FILTERED_SIGNATURE_ACTIVITIES.out.signature_plot
+            ch_sig_zero_png   = PLOT_SIGNATURE_BARGRAPHS.out.bargraph_png
+            ch_sig_cosine_png = Channel.value(file('/dev/null'))
         }
+    }
+
+    ch_postprocess_grouped = POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE.out.postprocess_outputs
+        .map { group, snv_dir, indel_dir, both_dir -> tuple(group, [snv_dir, indel_dir, both_dir]) }
+
+    } else {
+        // run_phylogeny_mutsig = false: /dev/null stubs so COMPILE_MASTER_REPORT runs.
+        ch_postprocess_grouped = CUSTOM_VARIANT_FILTER_PROVENANCE.out.combined_report
+            .map { group, pdf -> tuple(group, [file('/dev/null')]) }
+        ch_tree_comparison_pdf = CUSTOM_VARIANT_FILTER_PROVENANCE.out.combined_report
+            .map { group, pdf -> tuple(group, file('/dev/null')) }
+        ch_sig_zero_png   = Channel.value(file('/dev/null'))
+        ch_sig_cosine_png = Channel.value(file('/dev/null'))
     }
 
     // ── Germline identification and per-sample subsetting ────────────────────
@@ -726,23 +848,18 @@ workflow SOMATIC_SNP_INDEL_FILTERING_WF {
     )
 
     // ── Master report ─────────────────────────────────────────────────────────
-    ch_postprocess_grouped = POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE.out.postprocess_outputs
-        .map { group, snv_dir, indel_dir, both_dir -> tuple(group, [snv_dir, indel_dir, both_dir]) }
-
     ch_compile_input = ch_postprocess_grouped
-        .join(
-            TREES_COMPARE_SIMILARITIES.out.comparison_results
-                .map { group, dirs, pdf -> tuple(group, pdf) },
-            by: 0
-        )
+        .join( ch_tree_comparison_pdf, by: 0 )
         .join( CUSTOM_VARIANT_FILTER_PROVENANCE.out.combined_report, by: 0 )
         .join( PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS.out.prevalence_plot, by: 0 )
+        .join( ch_matrix_scheme_pdf, by: 0 )
 
     COMPILE_MASTER_REPORT (
         ch_compile_input,
         ch_sig_zero_png,
         ch_sig_cosine_png,
         PLOT_ADO_GERMLINE_COMPARISON.out.combined_plot,
+        CUSTOM_VARIANT_FILTER_PROVENANCE.out.filter_plot.map { group, pdf -> pdf },
         params.publish_dir,
         params.enable_publish
     )

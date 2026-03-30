@@ -4,13 +4,13 @@ params.timestamp = ""
 process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     tag "${group}_${chr}"
     publishDir "${publish_dir}_${params.timestamp}/CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES/", enabled: "$enable_publish"
-    
+
     input:
     tuple val(group),val(chr), path(res_tables), path(chosen_variants)
     val(threshold_as)
     val(threshold_clipped)
-    val(threshold_prop_bp_under)  
-    val(threshold_prop_bp_upper)  
+    val(threshold_prop_bp_under)
+    val(threshold_prop_bp_upper)
     val(threshold_sd_indiv)
     val(threshold_mad_indiv)
     val(threshold_sd_both)
@@ -26,14 +26,14 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     val(publish_dir)
     val(enable_publish)
 
-  
+
     output:
     tuple val(group), val(chr), path("Mat_NV_${group}_${chr}.tsv"), path("Mat_NR_${group}_${chr}.tsv"), emit: tabs
     tuple val(group), val(chr), path("df_passed*"), emit:df_pass
     tuple val(group), val(chr), path("res_pileup_all_group_${group}_${chr}.tsv"), emit:pileup
 
     script:
-    
+
     """
 
 
@@ -47,8 +47,8 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     cat list_files.txt | while read mfile; do cat \${mfile} >> res_end.tsv;done
 
     head -n1 res_end.tsv > df_raw_variants.tsv
-    
-    cat res_end.tsv | grep -v VariantId | grep -Pv "\\tREF\\t" >> df_raw_variants.tsv
+
+    cat res_end.tsv | grep -v VariantId | grep -Pv "\\tREF\\t" >> df_raw_variants.tsv || true
 
     echo -e "Filtering ... ";
 
@@ -60,7 +60,7 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     tail -n +2 Tab_NR.tsv > body.tsv
 
-    cat ${chosen_variants} | grep "^${chr}_" > mvariants.txt
+    cat ${chosen_variants} | grep "^${chr}_" > mvariants.txt || true
 
     awk -v OFS="\\t" -v FS="\\t" 'NR == FNR {  a[\$0]; next }{if(\$1 in a){ print \$0}}' mvariants.txt body.tsv >> Mat_NR_${group}_${chr}.tsv
 
@@ -83,9 +83,9 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     mv df_passed_propclipped.tsv df_passed_propclipped_${group}_${chr}.tsv
 
-    mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv 
+    mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv
 
-    mv df_passed_NUMFRAGMENTS.tsv df_passed_NUMFRAGMENTS_${group}_${chr}.tsv 
+    mv df_passed_NUMFRAGMENTS.tsv df_passed_NUMFRAGMENTS_${group}_${chr}.tsv
 
     cat Mat_NV_${group}_${chr}.tsv | tail -n +2 | cut -f1 > df_passed_DEPTH_${group}_${chr}.tsv
 

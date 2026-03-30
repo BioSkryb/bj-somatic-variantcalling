@@ -15,7 +15,6 @@ params.timestamp = ""
 
 process CONCAT_SUMMARY_ADO_INTERVALS_LABELED {
     tag "${label}"
-    container '597246834581.dkr.ecr.us-east-1.amazonaws.com/miscellaneous:r_ado_1.2'
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled: "$enable_publish"
 
     input:

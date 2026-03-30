@@ -4,12 +4,12 @@ params.timestamp = ""
 process CREATE_TAB_NVNR {
     tag "${group}_${chr}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled:"$enable_publish"
-    
+
     input:
     tuple val(group),val(chr), path(df_nv), path(df_nr_files)
     val(publish_dir)
     val(enable_publish)
-  
+
     output:
     tuple val(group), val(chr), path("mat_nv_group_${group}_chr_${chr}.tsv"), path("mat_nr_group_${group}_chr_${chr}.tsv")
 
@@ -24,7 +24,7 @@ process CREATE_TAB_NVNR {
 
     head -n1 ${df_nv} > header_nv.tsv
 
-    cat ${df_nv} | grep "^${chr}_" | tail -n+2 | awk -v OFS="\\t" '{outstring=\$1;for(i=2; i<=NF; i=i+1){gsub (/.*,/,"",\$i);gsub(/\\./,"0",\$i);outstring=outstring"\\t"\$i;}print outstring;}'  > df_nv_clean.tsv
+    cat ${df_nv} | grep "^${chr}_" | tail -n+2 | awk -v OFS="\\t" '{outstring=\$1;for(i=2; i<=NF; i=i+1){gsub (/.*,/,"",\$i);gsub(/\\./,"0",\$i);outstring=outstring"\\t"\$i;}print outstring;}' | sort -u -k1,1  > df_nv_clean.tsv
 
     cat header_nv.tsv df_nv_clean.tsv >  mat_nv_group_${group}_chr_${chr}.tsv
 
@@ -56,12 +56,20 @@ process CREATE_TAB_NVNR {
         rm temp.txt
 
         rm temp_nr.tsv;
-    
+
     done
 
     cat header_nv.tsv df_nr_clean.tsv >  mat_nr_group_${group}_chr_${chr}.tsv
 
     wc -l mat*.tsv
+
+    nv_rows=\$(tail -n+2 mat_nv_group_${group}_chr_${chr}.tsv | wc -l)
+    nr_rows=\$(tail -n+2 mat_nr_group_${group}_chr_${chr}.tsv | wc -l)
+    echo "NV data rows: \${nv_rows} | NR data rows: \${nr_rows}"
+    if [ "\${nv_rows}" -ne "\${nr_rows}" ]; then
+        echo "ERROR: NR row count (\${nr_rows}) does not match NV row count (\${nv_rows})" >&2
+        exit 1
+    fi
 
     """
 }

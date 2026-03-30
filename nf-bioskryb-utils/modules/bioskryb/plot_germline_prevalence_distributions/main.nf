@@ -12,7 +12,6 @@ params.timestamp = ""
 
 process PLOT_GERMLINE_PREVALENCE_DISTRIBUTIONS {
     tag "${group}"
-    container '597246834581.dkr.ecr.us-east-1.amazonaws.com/miscellaneous:custom_snp_somatic_filter_sequoia_feb2026'
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled: "$enable_publish"
 
     input:

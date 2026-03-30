@@ -4,7 +4,7 @@ params.timestamp = ""
 process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIGAR {
     tag "${sample_name}_${chr}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled:"$enable_publish"
-    
+
 
     input:
     tuple val(group), val(chr), val(sample_name), path(pileup_cigars_file), path(chosen_variants)
@@ -15,7 +15,7 @@ process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIG
     val(read_length)
     val(publish_dir)
     val(enable_publish)
-  
+
     output:
     tuple val(group),val(chr), path("res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv")
 
@@ -24,22 +24,27 @@ process CUSTOM_RSCRIPT_SOMATICSNP_FILTER_1_SAMPLELEVEL_PROCESS_PILEUP_SAMPLE_CIG
 
     echo -e "Subsetting variants ...";
 
-    cat ${chosen_variants} | grep "^${chr}_"  > cvariants.txt
+    cat ${chosen_variants} | grep "^${chr}_" > cvariants.txt || true
 
     cat cvariants.txt | cut -d "_" -f2 | sort -uV > cpositions.txt
-    
+
     awk -v FS="\\t" -v OFS="\\t" 'NR == FNR {  a[\$1]=1; next }{if( \$2 in a ){print \$0}}' cpositions.txt ${pileup_cigars_file} > pileup_subset.tsv
 
     echo -e "Launching QC script ...";
 
     if [ -s "pileup_subset.tsv" ]; then
-        Rscript /usr/local/bin/rscript_1.samplelevel_process_pileup_sample_cigars.R pileup_subset.tsv ${sample_name} ${threshold_mq} ${threshold_bq} ${threshold_bp} ${num_lines_read_pileup} ${read_length}
-        mv res.tsv res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv
+        Rscript /usr/local/bin/rscript_1.samplelevel_process_pileup_sample_cigars.R pileup_subset.tsv ${sample_name} ${threshold_mq} ${threshold_bq} ${threshold_bp} ${num_lines_read_pileup} ${read_length} || true
+        if [ -f "res.tsv" ]; then
+            mv res.tsv res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv
+        else
+            echo -e "R script produced no output (likely all READ_BASES empty), writing empty result ...";
+            touch res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv
+        fi
     else
         echo -e "Pileup subset file is empty, skipping QC script ...";
         touch res_grouplevel_pileup_group_${group}_sample_${sample_name}_chr_${chr}.tsv;
     fi
-    
+
     """
-    
+
 }
