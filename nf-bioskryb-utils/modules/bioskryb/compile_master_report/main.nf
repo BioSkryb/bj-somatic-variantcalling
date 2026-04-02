@@ -4,10 +4,9 @@ params.timestamp = ""
 // Compile a single master PDF report for one group by assembling outputs from:
 //   1. POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE  — VAF heatmaps (SNV / INDEL / BOTH)
 //   2. POSTPROCESS_SEQUOIA_DRAWVAFHEAT_TREE  — digital genotype heatmaps (SNV / INDEL / BOTH)
-//   3. PLOT_ZERO_FILTERED_SIGNATURE_ACTIVITIES   — signature activity bar chart (PNG, optional)
-//   4. PLOT_COSINE_FILTERED_SIGNATURE_ACTIVITIES — signature activity bar chart (PNG, optional)
-//   5. TREES_COMPARE_SIMILARITIES           — tree topology comparison master PDF
-//   6. CUSTOM_VARIANT_FILTER_PROVENANCE     — combined variant filter provenance report
+//   3. PLOT_SIGNATURE_BARGRAPHS             — combined signature activity bar chart PNG (optional)
+//   4. TREES_COMPARE_SIMILARITIES           — tree topology comparison master PDF
+//   5. CUSTOM_VARIANT_FILTER_PROVENANCE     — combined variant filter provenance report
 //
 // Each section is preceded by a navy title page generated with R (base graphics).
 // PNGs are converted to PDF via R (png::readPNG + rasterImage) before assembly.
@@ -21,6 +20,7 @@ params.timestamp = ""
 //   cosine_filtered_png  — cosine_filtered_signature_activities.png (or /dev/null sentinel)
 //   prevalence_plot_png  — germline_prevalence_distributions_${group}.png
 //   ado_summary_png      — ADO_germline_comparison.png
+//   matrix_scheme_pdf    — matrix_scheme_summary_${group}.pdf (or /dev/null sentinel)
 process COMPILE_MASTER_REPORT {
     tag "${group}"
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled: "$enable_publish"
@@ -28,12 +28,14 @@ process COMPILE_MASTER_REPORT {
     input:
     tuple val(group),
           path(postprocess_dirs),
-          path(tree_comparison_pdf),
-          path(combined_report_pdf),
-          path(prevalence_plot_png)
-    path(zero_filtered_png)
-    path(cosine_filtered_png)
-    path(ado_summary_png)
+          path(tree_comparison_pdf, stageAs: 'tree_comparison.pdf'),
+          path(combined_report_pdf, stageAs: 'combined_report.pdf'),
+          path(prevalence_plot_png, stageAs: 'prevalence_plot.png'),
+          path(matrix_scheme_pdf,   stageAs: 'matrix_scheme.pdf')
+    path(zero_filtered_png,   stageAs: 'zero_filtered_sig.png')
+    path(cosine_filtered_png, stageAs: 'cosine_filtered_sig.png')
+    path(ado_summary_png,     stageAs: 'ado_summary.png')
+    path(variant_filter_plot, stageAs: 'variant_filter_plot.pdf')     // variant_filter_plot_${group}.pdf — placed on page 2
     val(publish_dir)
     val(enable_publish)
 
@@ -62,6 +64,17 @@ process COMPILE_MASTER_REPORT {
             echo "[compile_master_report] SKIP (missing/empty): \$f"
         fi
     }
+
+    # ── PAGE 1: Master title ──────────────────────────────────────────────────
+    Rscript /usr/local/bin/make_title.R "master_title.pdf" "Somatic SNP/INDEL Filter Analysis Report" "${group}"
+    parts="master_title.pdf"
+
+    # ── PAGE 2: Variant Filtering Funnel ─────────────────────────────────────
+    add_pdf "${variant_filter_plot}"
+
+    # ── SECTION 0: Matrix Filtering Scheme Summary ───────────────────────────
+    add_section "Matrix Filtering Scheme Summary" "sec00_matrix_scheme_summary.pdf"
+    add_pdf "${matrix_scheme_pdf}"
 
     # ── SECTION 1: VAF Heatmaps ───────────────────────────────────────────────
     add_section "VAF Heatmaps - Phylogenetic Trees" "sec01_vaf_heatmaps.pdf"

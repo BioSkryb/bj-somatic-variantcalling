@@ -12,7 +12,7 @@ process CUSTOM_VARIANT_FILTER_PROVENANCE {
     publishDir "${publish_dir}_${params.timestamp}/CUSTOM_VARIANT_FILTER_PROVENANCE/", enabled: "$enable_publish"
 
     input:
-    tuple val(group), path(merged_vcf_variants), path(bulk_prov), path(binom_tsv), path(vep_prov), path(pileup_tables), path(sequoia_filt), path(tab_nvnr_files)
+    tuple val(group), path(merged_vcf_variants), path(bulk_prov), path(binom_tsv), path(vep_prov), path(pileup_tables), path(sequoia_filt), path(tab_nvnr_files), path(df_nv_prebulk)
     val(publish_dir)
     val(enable_publish)
 
@@ -28,24 +28,33 @@ process CUSTOM_VARIANT_FILTER_PROVENANCE {
     tuple val(group), path("Patient_filter_report_combined_${group}.pdf"),     emit: combined_report
     tuple val(group), path("vcf_annotation_table_${group}.tsv"),               emit: vcf_annotation_table
     tuple val(group), path("pileup_focal_variants_${group}.tsv"),              emit: pileup_focal
+    tuple val(group), path("upstream_filter_per_sample_${group}.tsv"),        emit: upstream_per_sample
 
     script:
     def g = group
     """
     set -euo pipefail
 
+
     Rscript /usr/local/bin/master_table.R "${g}"
 
-    Rscript /usr/local/bin/binom_ggplots.R variant_master_filter_table_${g}.tsv "${g}" binom_filter_plots_${g}.pdf
+    Rscript /usr/local/bin/upstream_filter_per_sample.R \
+        "${g}" \
+        variant_master_filter_table_${g}.tsv \
+        "${df_nv_prebulk}" \
+        mat_nv_group_*.tsv &
 
-    Rscript /usr/local/bin/vaf_hexbin_plots.R variant_master_filter_table_${g}.tsv "${g}" vaf_hexbin_plots_${g}.pdf
+    Rscript /usr/local/bin/binom_ggplots.R variant_master_filter_table_${g}.tsv "${g}" binom_filter_plots_${g}.pdf &
 
-    Rscript /usr/local/bin/pileup_metric_plots.R "${g}" pileup_metric_plots_${g}.pdf
+    Rscript /usr/local/bin/vaf_hexbin_plots.R variant_master_filter_table_${g}.tsv "${g}" vaf_hexbin_plots_${g}.pdf &
 
-    Rscript /usr/local/bin/pileup_bppos_plots.R "${g}" variant_master_filter_table_${g}.tsv pileup_bppos_plots_${g}.pdf
+    Rscript /usr/local/bin/pileup_metric_plots.R "${g}" pileup_metric_plots_${g}.pdf &
+
+    Rscript /usr/local/bin/pileup_bppos_plots.R "${g}" variant_master_filter_table_${g}.tsv pileup_bppos_plots_${g}.pdf &
+
+    wait
 
     pdfunite \
-        variant_filter_plot_${g}.pdf \
         binom_filter_plots_${g}.pdf \
         vaf_hexbin_plots_${g}.pdf \
         pileup_metric_plots_${g}.pdf \
@@ -161,5 +170,6 @@ process CUSTOM_VARIANT_FILTER_PROVENANCE {
 
     focal_rows=\$(tail -n +2 pileup_focal_variants_${g}.tsv | wc -l)
     echo "Complete pileup rows (ALT+REF+synthetic): \${focal_rows}"
+
     """
 }

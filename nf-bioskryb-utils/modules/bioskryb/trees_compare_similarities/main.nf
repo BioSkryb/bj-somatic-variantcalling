@@ -12,7 +12,10 @@ process TREES_COMPARE_SIMILARITIES {
     publishDir "${publish_dir}_${params.timestamp}/${task.process.replaceAll(':', '_')}", enabled: "$enable_publish"
 
     input:
-    tuple val(group), path(snv_outputs), path(indel_outputs), path(both_outputs)
+    tuple val(group),
+          path(snv_outputs,   stageAs: 'snv_inputs/*'),
+          path(indel_outputs, stageAs: 'indel_inputs/*'),
+          path(both_outputs,  stageAs: 'both_inputs/*')
     val(publish_dir)
     val(enable_publish)
 

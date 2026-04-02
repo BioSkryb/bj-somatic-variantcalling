@@ -13,6 +13,7 @@ process SEQUOIA_SECOND_FILTER {
     val(cutoff_rho_indel)
     val(min_cov)
     val(max_cov)
+    val(gender)
     val(publish_dir)
     val(enable_publish)
   
@@ -28,7 +29,7 @@ process SEQUOIA_SECOND_FILTER {
     
     wc -l ${mat_nr}
 
-    Rscript /usr/local/bin/rscript_4.sequoia_second_pass_filter.R --genomeFile ${reference}/genome.fa -v ${mat_nv} -r ${mat_nr} --mpboot_path /usr/local/bin/ -n $task.cpus --snv_rho ${cutoff_rho_snp} --indel_rho ${cutoff_rho_indel} --germline_cutoff ${cutoff_binomial} --min_cov ${min_cov} --max_cov ${max_cov}
+    Rscript /usr/local/bin/rscript_4.sequoia_second_pass_filter.R --genomeFile ${reference}/genome.fa -v ${mat_nv} -r ${mat_nr} --mpboot_path /usr/local/bin/ -n $task.cpus --snv_rho ${cutoff_rho_snp} --indel_rho ${cutoff_rho_indel} --germline_cutoff ${cutoff_binomial} --min_cov ${min_cov} --max_cov ${max_cov} --gender ${gender}
     
     ls Patient* | while read file;
     do
