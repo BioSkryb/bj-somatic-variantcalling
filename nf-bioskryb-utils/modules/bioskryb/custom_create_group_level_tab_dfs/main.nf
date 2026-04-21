@@ -18,9 +18,9 @@ process CUSTOM_CREATE_GROUP_LEVEL_TAB_DFS {
     
     """
 
-    ls Mat_NR* | sort -V > list_nr.txt
+    for f in Mat_NR*; do [ \$(wc -l < "\$f") -gt 1 ] && echo "\$f"; done | sort -V > list_nr.txt
 
-    ls Mat_NV* | sort -V > list_nv.txt
+    for f in Mat_NV*; do [ \$(wc -l < "\$f") -gt 1 ] && echo "\$f"; done | sort -V > list_nv.txt
 
     ls Mat_N* | while read file; do head -n1 \${file} | tr "\\t" "\\n" | tail -n+2;done | sort -uV > all_samples.txt
 

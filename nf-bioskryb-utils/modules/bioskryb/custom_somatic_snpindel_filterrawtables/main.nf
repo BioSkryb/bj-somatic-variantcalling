@@ -4,13 +4,13 @@ params.timestamp = ""
 process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     tag "${group}_${chr}"
     publishDir "${publish_dir}_${params.timestamp}/CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES/", enabled: "$enable_publish"
-    
+
     input:
     tuple val(group),val(chr), path(res_tables), path(chosen_variants)
     val(threshold_as)
     val(threshold_clipped)
-    val(threshold_prop_bp_under)  
-    val(threshold_prop_bp_upper)  
+    val(threshold_prop_bp_under)
+    val(threshold_prop_bp_upper)
     val(threshold_sd_indiv)
     val(threshold_mad_indiv)
     val(threshold_sd_both)
@@ -26,15 +26,17 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     val(publish_dir)
     val(enable_publish)
 
-  
+
     output:
     tuple val(group), val(chr), path("Mat_NV_${group}_${chr}.tsv"), path("Mat_NR_${group}_${chr}.tsv"), emit: tabs
     tuple val(group), val(chr), path("df_passed*"), emit:df_pass
     tuple val(group), val(chr), path("res_pileup_all_group_${group}_${chr}.tsv"), emit:pileup
 
     script:
-    
+
     """
+
+
 
     echo -e "Concatenating tables ...";
 
@@ -45,8 +47,8 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
     cat list_files.txt | while read mfile; do cat \${mfile} >> res_end.tsv;done
 
     head -n1 res_end.tsv > df_raw_variants.tsv
-    
-    cat res_end.tsv | grep -v VariantId | grep -Pv "\\tREF\\t" >> df_raw_variants.tsv
+
+    cat res_end.tsv | grep -v VariantId | grep -Pv "\\tREF\\t" >> df_raw_variants.tsv || true
 
     echo -e "Filtering ... ";
 
@@ -58,7 +60,7 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     tail -n +2 Tab_NR.tsv > body.tsv
 
-    cat ${chosen_variants} | grep "^${chr}_" > mvariants.txt
+    cat ${chosen_variants} | grep "^${chr}_" > mvariants.txt || true
 
     awk -v OFS="\\t" -v FS="\\t" 'NR == FNR {  a[\$0]; next }{if(\$1 in a){ print \$0}}' mvariants.txt body.tsv >> Mat_NR_${group}_${chr}.tsv
 
@@ -83,11 +85,49 @@ process CUSTOM_SOMATIC_SNPINDEL_FILTERRAWTABLES {
 
     mv df_passed_BPPOS.tsv df_passed_BPPOS_${group}_${chr}.tsv
 
-    mv df_passed_NUMFRAGMENTS.tsv df_passed_NUMFRAGMENTS_${group}_${chr}.tsv 
+    mv df_passed_NUMFRAGMENTS.tsv df_passed_NUMFRAGMENTS_${group}_${chr}.tsv
 
     cat Mat_NV_${group}_${chr}.tsv | tail -n +2 | cut -f1 > df_passed_DEPTH_${group}_${chr}.tsv
 
     mv res_end.tsv res_pileup_all_group_${group}_${chr}.tsv
+
+    echo -e "Annotating pileup table with per-filter status ...";
+
+    awk -v OFS="\\t" '
+      FILENAME ~ /df_passed_AS/                  && NF>=3 { as_pass[\$2 SUBSEP \$3]=1;      next }
+      FILENAME ~ /df_passed_propclipped/         && NF>=3 { clip_pass[\$2 SUBSEP \$3]=1;    next }
+      FILENAME ~ /df_passed_BPPOS/               && NF>=3 { bppos_pass[\$2 SUBSEP \$3]=1;   next }
+      FILENAME ~ /df_passed_NUMFRAGMENTS/        && NF>=3 { numfrag_pass[\$2 SUBSEP \$3]=1; next }
+      FILENAME ~ /df_passed_DEPTH/               && NF>=1 { depth_pass[\$1]=1;             next }
+      FILENAME ~ /df_passed_PRESENTVCF_NOTINBAM/ && NF>=1 { vcf_notbam[\$1]=1;             next }
+      FILENAME ~ /df_passed_PRESENTBAM_NOTINVCF/ && NF>=1 { bam_notvcf[\$1]=1;             next }
+      FNR==1 {
+        print \$0, "AS_Filter", "PropClipped_Filter", "BPPos_Filter", "NumFragments_Filter",
+                   "Depth_Filter", "PresentVCF_NotInBAM", "PresentBAM_NotInVCF", "Verdict"
+        next
+      }
+      {
+        key = \$1 SUBSEP \$2; vid = \$2
+        print \$0,
+          ((key in as_pass)      ? "Pass" : "Fail"),
+          ((key in clip_pass)    ? "Pass" : "Fail"),
+          ((key in bppos_pass)   ? "Pass" : "Fail"),
+          ((key in numfrag_pass) ? "Pass" : "Fail"),
+          ((vid in depth_pass)   ? "Pass" : "Fail"),
+          ((vid in vcf_notbam)   ? "Yes"  : "No"),
+          ((vid in bam_notvcf)   ? "Yes"  : "No"),
+          ((vid in depth_pass)   ? "Pass" : "Fail")
+      }
+    ' df_passed_AS_${group}_${chr}.tsv \
+      df_passed_propclipped_${group}_${chr}.tsv \
+      df_passed_BPPOS_${group}_${chr}.tsv \
+      df_passed_NUMFRAGMENTS_${group}_${chr}.tsv \
+      df_passed_DEPTH_${group}_${chr}.tsv \
+      df_passed_PRESENTVCF_NOTINBAM_${group}_${chr}.tsv \
+      df_passed_PRESENTBAM_NOTINVCF_${group}_${chr}.tsv \
+      res_pileup_all_group_${group}_${chr}.tsv > res_pileup_annotated.tsv
+
+    mv res_pileup_annotated.tsv res_pileup_all_group_${group}_${chr}.tsv
 
     """
 }
